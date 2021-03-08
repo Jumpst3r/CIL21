@@ -18,25 +18,16 @@ class BaselineMLP(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.HU_COUNT = 50
-        self.feature_extractor = nn.Sequential(                                        # in vol: (batch_size, 3, 16, 16)
-            nn.Conv2d(in_channels=1, kernel_size=(3,3), out_channels=5),  # output vol: (batch_size, 16, 14, 14)
-            nn.ReLU(),
-            nn.Conv2d(in_channels=5, kernel_size=(3,3), out_channels=10),  # output vol: (batch_size, 32, 12, 12)
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=(2,2), stride=(2,2)),
-            nn.ReLU()
-            )
         self.classifier = nn.Sequential(
-            nn.Linear(10*8*8, self.HU_COUNT),
+            nn.Linear(2, self.HU_COUNT),
             nn.ReLU(),
             nn.Linear(self.HU_COUNT, self.HU_COUNT),
+            nn.Dropout(0.5),
             nn.ReLU(),
             nn.Linear(self.HU_COUNT, 2)
         )
 
     def forward(self, x):
-        x = self.feature_extractor(x)
-        x = x.view(-1,10*8*8)
         x = self.classifier(x)
         return x
 
@@ -66,7 +57,7 @@ if __name__ == '__main__':
     np_arrs_features = sorted(glob.glob(TRAINING_DATA + '*fts.npy'))
     np_arrs_labels = sorted(glob.glob(TRAINING_DATA + '*labels.npy'))
 
-    X = np.stack([np.load(np_arr) for np_arr in np_arrs_features]).reshape((-1,PATCH_SIZE,PATCH_SIZE))
+    X = np.stack([np.load(np_arr) for np_arr in np_arrs_features]).reshape((-1,2))
     Y = np.stack([np.load(np_arr) for np_arr in np_arrs_labels]).reshape((-1))
 
     X_pos = X[Y==1]
@@ -91,7 +82,7 @@ if __name__ == '__main__':
 
     
 
-    tensor_x = torch.Tensor(X).unsqueeze(1)
+    tensor_x = torch.Tensor(X)
     tensor_y = torch.Tensor(Y).to(torch.long)
     # print(torch.sum(tensor_y==0))
     # print(torch.sum(tensor_y==1))
@@ -111,4 +102,4 @@ if __name__ == '__main__':
 
     baseline = BaselineMLP()
     trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=100)
-    trainer.fit(baseline, DataLoader(train, batch_size=50), DataLoader(val, batch_size=50))
+    trainer.fit(baseline, DataLoader(train, batch_size=150), DataLoader(val, batch_size=150))

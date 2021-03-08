@@ -33,7 +33,7 @@ def patchwise_extract(image_path: str, gt_path: str):
     np_gt = np.where(np_gt >=  1, 1, 0)
     stride = PATCH_SIZE // 2
     assert 400 % stride == 0, 'image size not divisible by 400'
-    features = np.zeros(shape=(int(400//stride)**2, PATCH_SIZE, PATCH_SIZE))
+    features = np.zeros(shape=(int(400//stride)**2, 2))
     labels = np.zeros(shape=(int(400//stride)**2))
     ft_idx = 0
     for y in range(0,400-20,stride):
@@ -47,12 +47,12 @@ def patchwise_extract(image_path: str, gt_path: str):
                 print('=======')
                 print(labels[ft_idx])
                 cv2.rectangle(opencvImage, (x, y), (x+PATCH_SIZE, y+PATCH_SIZE), (255,255,255, 0.4) if labels[ft_idx] == 1 else (0,0,0,0.4))
-                features[ft_idx] = patch
+                features[ft_idx] = np.array([patch.mean(), patch.std()])
                 ft_idx += 1
                 print(np.mean(np_gt[y:y+PATCH_SIZE,x:x+PATCH_SIZE]))
                 print("======")
-    cv2.imshow('', opencvImage)
-    cv2.waitKey()
+    #cv2.imshow('', opencvImage)
+    #cv2.waitKey()
     np.save('patches' + os.path.sep + (basename + '_fts'), features)
     np.save('patches' + os.path.sep + (basename + '_labels'), labels)
     

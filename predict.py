@@ -13,12 +13,12 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from baseline_training import BaselineMLP
 from feature_extractor import PATCH_SIZE
 import matplotlib.pyplot as plt
-model = BaselineMLP.load_from_checkpoint('weights-v1.ckpt')
+model = BaselineMLP.load_from_checkpoint('weights-v4.ckpt')
 
 # Iterate through a bunch of pictures in the test set
 
-# test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
-test_imgs = glob.glob('training/training/images/*.png')
+test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
+# test_imgs = glob.glob('training/training/images/*.png')
 for image_path in test_imgs:
     im = Image.open(image_path)
     im_org = Image.open(image_path)
@@ -33,12 +33,12 @@ for image_path in test_imgs:
     #plt.imshow(np_im)
     #plt.show()
     patches_per_row = (np_im.shape[0]) // PATCH_SIZE
-    features = np.zeros(shape=(patches_per_row**2, 1, PATCH_SIZE, PATCH_SIZE))
+    features = np.zeros(shape=(patches_per_row**2, 2))
     ft_idx = 0
     for y in range(0,patches_per_row*PATCH_SIZE,PATCH_SIZE):
         for x in range(0,patches_per_row*PATCH_SIZE,PATCH_SIZE):
                 patch = np_im[y:y+PATCH_SIZE,x:x+PATCH_SIZE] # channel last to channel first
-                features[ft_idx] = patch
+                features[ft_idx] = np.array([patch.mean(), patch.std()])
                 ft_idx += 1
 
     model_in = torch.from_numpy(features).to(torch.float32)
