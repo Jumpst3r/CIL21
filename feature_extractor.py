@@ -32,22 +32,18 @@ def patchwise_extract(image_path: str, gt_path: str):
     np_gt = np.where(np_gt >=  1, 1, 0)
     stride = PATCH_SIZE // 2
     assert 400 % stride == 0, 'image size not divisible by 400'
-    features = np.zeros(shape=(int(400//stride)**2, 6))
+    features = np.zeros(shape=(int(400//stride)**2, 3, PATCH_SIZE, PATCH_SIZE))
     labels = np.zeros(shape=(int(400//stride)**2))
     ft_idx = 0
     for y in range(0,400-20,stride):
         for x in range(0,400-20,stride):
                 patch = np_im[y:y+PATCH_SIZE,x:x+PATCH_SIZE]
-                labels[ft_idx] = 1 if np.mean(np_gt[y:y+PATCH_SIZE,x:x+PATCH_SIZE]) >= 0.7 else 0 
+                labels[ft_idx] = 1 if np.mean(np_gt[y:y+PATCH_SIZE,x:x+PATCH_SIZE]) >= 0.3 else 0 
                 if labels[ft_idx] == 1:
                     example_pos += 1
                 else:
                      example_neg += 1
-            
-                cv2.rectangle(opencvImage, (x, y), (x+PATCH_SIZE, y+PATCH_SIZE), (255,255,255, 0.4) if labels[ft_idx] == 1 else (0,0,0,0.4))
-                means = [patch[:,:,c].mean() for c in range(3)]
-                std = [patch[:,:,c].std() for c in range(3)]
-                features[ft_idx] = np.concatenate((means,std))
+                features[ft_idx] = np.moveaxis(patch,-1,0)
                 ft_idx += 1
 
     #cv2.imshow('', opencvImage)

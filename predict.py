@@ -13,33 +13,31 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from baseline_training import BaselineMLP
 from feature_extractor import PATCH_SIZE
 import matplotlib.pyplot as plt
-model = BaselineMLP.load_from_checkpoint('weights-v7.ckpt')
+model = BaselineMLP.load_from_checkpoint('weights-v12.ckpt')
 
 # Iterate through a bunch of pictures in the test set
 
 test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
-# test_imgs = glob.glob('training/training/images/*.png')
+#test_imgs = glob.glob('training/training/images/*.png')
 for image_path in test_imgs:
     im = Image.open(image_path)
     im_org = Image.open(image_path)
     np_im = np.array(im)
     np_im_org = np.array(im_org)
-    scaled = cv2.resize(np_im, dsize=(400, 400), interpolation=cv2.INTER_CUBIC)
-    scaled_org = cv2.resize(np_im_org, dsize=(400, 400), interpolation=cv2.INTER_CUBIC)
+    scaled = cv2.resize(np_im, dsize=(400, 400), interpolation=cv2.INTER_LANCZOS4)
+    scaled_org = cv2.resize(np_im_org, dsize=(400, 400), interpolation=cv2.INTER_LANCZOS4)
+    cv2.imshow('prediction', cv2.cvtColor(scaled, cv2.COLOR_RGB2BGR))
+    cv2.waitKey()
     opencvImage = scaled_org.copy()
     original = opencvImage.copy()
     np_im = scaled
-    #plt.imshow(np_im)
-    #plt.show()
     patches_per_row = (np_im.shape[0]) // PATCH_SIZE
-    features = np.zeros(shape=(patches_per_row**2, 6))
+    features = np.zeros(shape=(patches_per_row**2, 3, PATCH_SIZE, PATCH_SIZE))
     ft_idx = 0
     for y in range(0,patches_per_row*PATCH_SIZE,PATCH_SIZE):
         for x in range(0,patches_per_row*PATCH_SIZE,PATCH_SIZE):
                 patch = np_im[y:y+PATCH_SIZE,x:x+PATCH_SIZE]
-                means = [patch[:,:,c].mean() for c in range(3)]
-                std = [patch[:,:,c].std() for c in range(3)]
-                features[ft_idx] = np.concatenate((means,std))
+                features[ft_idx] = np.moveaxis(patch,-1,0)
                 ft_idx += 1
 
     model_in = torch.from_numpy(features).to(torch.float32)

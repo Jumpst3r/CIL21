@@ -18,8 +18,22 @@ class BaselineMLP(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.HU_COUNT = 200
+
+        self.feature_extractor = nn.Sequential(
+            nn.Conv2d(in_channels=3, kernel_size=(3,3), out_channels=5),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=5, kernel_size=(3,3), out_channels=10),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=10, kernel_size=(3,3), out_channels=16),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=16, kernel_size=(3,3), out_channels=32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(2,2), stride=(2,2)),
+            nn.ReLU()
+        )
+        self.constant = 6*6*32
         self.classifier = nn.Sequential(
-            nn.Linear(6, self.HU_COUNT),
+            nn.Linear(self.constant, self.HU_COUNT),
             nn.Dropout(0.5),
             nn.ReLU(),
             nn.Linear(self.HU_COUNT, self.HU_COUNT),
@@ -30,20 +44,22 @@ class BaselineMLP(pl.LightningModule):
         )
 
     def forward(self, x):
+        x = self.feature_extractor(x)
+        x = x.view(-1, self.constant)
         x = self.classifier(x)
         return x
 
     def training_step(self, batch, batch_idx):
         x, y = batch
         out = self.forward(x)
-        loss = F.cross_entropy(out, y, weight=torch.tensor([1,0.6]))
+        loss = F.cross_entropy(out, y, weight=torch.tensor([1,1.]))
         self.log('training loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         out = self.forward(x)
-        loss = F.cross_entropy(out, y, weight=torch.tensor([1,0.6]))
+        loss = F.cross_entropy(out, y, weight=torch.tensor([1,1.]))
         _f1_loss = f1_loss(y,out)
         self.log('F1 val', _f1_loss)
         return loss
@@ -59,7 +75,7 @@ if __name__ == '__main__':
     np_arrs_features = sorted(glob.glob(TRAINING_DATA + '*fts.npy'))
     np_arrs_labels = sorted(glob.glob(TRAINING_DATA + '*labels.npy'))
 
-    X = np.stack([np.load(np_arr) for np_arr in np_arrs_features]).reshape((-1,6))
+    X = np.stack([np.load(np_arr) for np_arr in np_arrs_features]).reshape((-1,3,PATCH_SIZE,PATCH_SIZE))
     Y = np.stack([np.load(np_arr) for np_arr in np_arrs_labels]).reshape((-1))
     
     X_pos = X[Y==1]
@@ -103,5 +119,5 @@ if __name__ == '__main__':
 
 
     baseline = BaselineMLP()
-    trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=500)
-    trainer.fit(baseline, DataLoader(train, batch_size=1000), DataLoader(val, batch_size=1000))
+    trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=15)
+    trainer.fit(baseline, DataLoader(train, batch_size=500), DataLoader(val, batch_size=500))
