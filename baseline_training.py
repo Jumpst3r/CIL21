@@ -17,14 +17,16 @@ class BaselineMLP(pl.LightningModule):
 
     def __init__(self):
         super().__init__()
-        self.HU_COUNT = 50
+        self.HU_COUNT = 200
         self.classifier = nn.Sequential(
-            nn.Linear(2, self.HU_COUNT),
+            nn.Linear(6, self.HU_COUNT),
+            nn.Dropout(0.5),
             nn.ReLU(),
             nn.Linear(self.HU_COUNT, self.HU_COUNT),
             nn.Dropout(0.5),
             nn.ReLU(),
-            nn.Linear(self.HU_COUNT, 2)
+            nn.Linear(self.HU_COUNT, 2),
+            nn.ReLU()
         )
 
     def forward(self, x):
@@ -34,14 +36,14 @@ class BaselineMLP(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         out = self.forward(x)
-        loss = F.cross_entropy(out, y)
+        loss = F.cross_entropy(out, y, weight=torch.tensor([1,0.6]))
         self.log('training loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         out = self.forward(x)
-        loss = F.cross_entropy(out, y)
+        loss = F.cross_entropy(out, y, weight=torch.tensor([1,0.6]))
         _f1_loss = f1_loss(y,out)
         self.log('F1 val', _f1_loss)
         return loss
@@ -57,9 +59,9 @@ if __name__ == '__main__':
     np_arrs_features = sorted(glob.glob(TRAINING_DATA + '*fts.npy'))
     np_arrs_labels = sorted(glob.glob(TRAINING_DATA + '*labels.npy'))
 
-    X = np.stack([np.load(np_arr) for np_arr in np_arrs_features]).reshape((-1,2))
+    X = np.stack([np.load(np_arr) for np_arr in np_arrs_features]).reshape((-1,6))
     Y = np.stack([np.load(np_arr) for np_arr in np_arrs_labels]).reshape((-1))
-
+    
     X_pos = X[Y==1]
     X_neg = X[Y==0]
 
@@ -73,7 +75,7 @@ if __name__ == '__main__':
 
     Y = np.concatenate((Y_neg,Y_pos))
     X = np.concatenate((X_neg, X_pos))
-
+    
     print(X.mean())
     print(X.std()) 
 
@@ -90,7 +92,7 @@ if __name__ == '__main__':
 
     dataset = TensorDataset(tensor_x,tensor_y)
 
-    train, val = random_split(dataset, [int(0.7*X.shape[0]), X.shape[0]-int(0.7*X.shape[0])])
+    train, val = random_split(dataset, [int(0.8*X.shape[0]), X.shape[0]-int(0.8*X.shape[0])])
 
     checkpoint_callback = ModelCheckpoint(
         dirpath='./',
@@ -101,5 +103,5 @@ if __name__ == '__main__':
 
 
     baseline = BaselineMLP()
-    trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=100)
-    trainer.fit(baseline, DataLoader(train, batch_size=150), DataLoader(val, batch_size=150))
+    trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=500)
+    trainer.fit(baseline, DataLoader(train, batch_size=1000), DataLoader(val, batch_size=1000))

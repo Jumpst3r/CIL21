@@ -6,7 +6,7 @@ from tqdm import tqdm
 import cv2
 import matplotlib.pyplot as plt
 
-PATCH_SIZE = 16
+PATCH_SIZE = 20
 
 example_neg = 0
 example_pos = 0
@@ -25,7 +25,6 @@ def patchwise_extract(image_path: str, gt_path: str):
     global example_neg, example_pos
     basename = image_path[image_path.find('sat'):-4]
     im = Image.open(image_path)
-    im = ImageOps.grayscale(im)
     np_im = np.array(im) # array of shape (400,400,3)
     opencvImage = np_im.copy()
     gt = Image.open(gt_path)
@@ -33,24 +32,24 @@ def patchwise_extract(image_path: str, gt_path: str):
     np_gt = np.where(np_gt >=  1, 1, 0)
     stride = PATCH_SIZE // 2
     assert 400 % stride == 0, 'image size not divisible by 400'
-    features = np.zeros(shape=(int(400//stride)**2, 2))
+    features = np.zeros(shape=(int(400//stride)**2, 6))
     labels = np.zeros(shape=(int(400//stride)**2))
     ft_idx = 0
     for y in range(0,400-20,stride):
         for x in range(0,400-20,stride):
                 patch = np_im[y:y+PATCH_SIZE,x:x+PATCH_SIZE]
-                labels[ft_idx] = 1 if np.mean(np_gt[y:y+PATCH_SIZE,x:x+PATCH_SIZE]) >= 0.3 else 0 
+                labels[ft_idx] = 1 if np.mean(np_gt[y:y+PATCH_SIZE,x:x+PATCH_SIZE]) >= 0.7 else 0 
                 if labels[ft_idx] == 1:
                     example_pos += 1
                 else:
                      example_neg += 1
-                print('=======')
-                print(labels[ft_idx])
+            
                 cv2.rectangle(opencvImage, (x, y), (x+PATCH_SIZE, y+PATCH_SIZE), (255,255,255, 0.4) if labels[ft_idx] == 1 else (0,0,0,0.4))
-                features[ft_idx] = np.array([patch.mean(), patch.std()])
+                means = [patch[:,:,c].mean() for c in range(3)]
+                std = [patch[:,:,c].std() for c in range(3)]
+                features[ft_idx] = np.concatenate((means,std))
                 ft_idx += 1
-                print(np.mean(np_gt[y:y+PATCH_SIZE,x:x+PATCH_SIZE]))
-                print("======")
+
     #cv2.imshow('', opencvImage)
     #cv2.waitKey()
     np.save('patches' + os.path.sep + (basename + '_fts'), features)
