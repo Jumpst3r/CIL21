@@ -13,12 +13,12 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from baseline_training import BaselineMLP
 from feature_extractor import PATCH_SIZE
 import matplotlib.pyplot as plt
-model = BaselineMLP.load_from_checkpoint('weights-v12.ckpt')
+model = BaselineMLP.load_from_checkpoint('weights-v1.ckpt')
 
 # Iterate through a bunch of pictures in the test set
 
-test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
-#test_imgs = glob.glob('training/training/images/*.png')
+#test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
+test_imgs = glob.glob('training/training/images/*.png')
 for image_path in test_imgs:
     im = Image.open(image_path)
     im_org = Image.open(image_path)

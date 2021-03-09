@@ -17,7 +17,7 @@ class BaselineMLP(pl.LightningModule):
 
     def __init__(self):
         super().__init__()
-        self.HU_COUNT = 200
+        self.HU_COUNT = 300
 
         self.feature_extractor = nn.Sequential(
             nn.Conv2d(in_channels=3, kernel_size=(3,3), out_channels=5),
@@ -34,10 +34,10 @@ class BaselineMLP(pl.LightningModule):
         self.constant = 6*6*32
         self.classifier = nn.Sequential(
             nn.Linear(self.constant, self.HU_COUNT),
-            nn.Dropout(0.5),
+            nn.Dropout(0.3),
             nn.ReLU(),
             nn.Linear(self.HU_COUNT, self.HU_COUNT),
-            nn.Dropout(0.5),
+            nn.Dropout(0.3),
             nn.ReLU(),
             nn.Linear(self.HU_COUNT, 2),
             nn.ReLU()
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     
     print(X.mean())
     print(X.std()) 
-
+    
     X -= X.mean()
     X /= X.std() 
 
@@ -119,5 +119,5 @@ if __name__ == '__main__':
 
 
     baseline = BaselineMLP()
-    trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=15)
+    trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=200)
     trainer.fit(baseline, DataLoader(train, batch_size=500), DataLoader(val, batch_size=500))

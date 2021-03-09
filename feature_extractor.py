@@ -39,15 +39,15 @@ def patchwise_extract(image_path: str, gt_path: str):
         for x in range(0,400-20,stride):
                 patch = np_im[y:y+PATCH_SIZE,x:x+PATCH_SIZE]
                 labels[ft_idx] = 1 if np.mean(np_gt[y:y+PATCH_SIZE,x:x+PATCH_SIZE]) >= 0.3 else 0 
+                cv2.rectangle(opencvImage, (x, y), (x+PATCH_SIZE, y+PATCH_SIZE), (255,255,255, 0.4) if labels[ft_idx] == 1 else (0,0,0,0.4))
                 if labels[ft_idx] == 1:
                     example_pos += 1
                 else:
                      example_neg += 1
                 features[ft_idx] = np.moveaxis(patch,-1,0)
                 ft_idx += 1
-
-    #cv2.imshow('', opencvImage)
-    #cv2.waitKey()
+    cv2.imshow('', opencvImage)
+    cv2.waitKey()
     np.save('patches' + os.path.sep + (basename + '_fts'), features)
     np.save('patches' + os.path.sep + (basename + '_labels'), labels)
     
