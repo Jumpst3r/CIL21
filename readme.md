@@ -28,6 +28,10 @@ Create & activate a new python environment: `virtualenv env && source ./env/bin/
 
 Install required packages : `pip install -r requirements.txt`
 
+To used previously trained model & visualize predictions: `python3 predict.py` (make sure to use the latest weights file)
+
+### To retrain the network
+
 Create a `patches` directory: `mkdir patches`
 
 Run the patch generation script: `python3 feature_extractor.py`
