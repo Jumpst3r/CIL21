@@ -26,8 +26,6 @@ for image_path in test_imgs:
     np_im_org = np.array(im_org)
     scaled = cv2.resize(np_im, dsize=(400, 400), interpolation=cv2.INTER_LANCZOS4)
     scaled_org = cv2.resize(np_im_org, dsize=(400, 400), interpolation=cv2.INTER_LANCZOS4)
-    cv2.imshow('prediction', cv2.cvtColor(scaled, cv2.COLOR_RGB2BGR))
-    cv2.waitKey()
     opencvImage = scaled_org.copy()
     original = opencvImage.copy()
     np_im = scaled
@@ -54,7 +52,7 @@ for image_path in test_imgs:
                 ft_idx += 1
 
     res = cv2.addWeighted(original, 1.0, opencvImage, 0.25, 1)
-    cv2.imshow('prediction', res)
+    cv2.imshow('input / prediction', np.concatenate((res,cv2.cvtColor(scaled, cv2.COLOR_RGB2BGR)), axis=1))
     cv2.waitKey()
     # cv2.imshow('debug_image', opencvImage)
     # cv2.waitKey()
