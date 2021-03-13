@@ -134,8 +134,8 @@ if __name__ == '__main__':
     num_val = num_samples_total - num_train
     train, val = random_split(dataset, [num_train, num_val])
 
-    train_dataloader = DataLoader(train, batch_size=2, num_workers=1)
-    val_dataloader =  DataLoader(val, batch_size=2, num_workers=1)
+    train_dataloader = DataLoader(train, batch_size=20, num_workers=1)
+    val_dataloader =  DataLoader(val, batch_size=20, num_workers=1)
 
     checkpoint_callback = ModelCheckpoint(
         dirpath='./',
@@ -145,5 +145,5 @@ if __name__ == '__main__':
     )
 
     fcn = FCN()
-    trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=200, gpus=1)
+    trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=1000, gpus=1)
     trainer.fit(fcn,train_dataloader,val_dataloader)
