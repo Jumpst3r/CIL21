@@ -21,36 +21,36 @@ class FCN(pl.LightningModule):
         super().__init__()
 
         self.convBlock1 = nn.Sequential(
-            nn.Conv2d(in_channels=3, kernel_size=(3,3), padding=(1,1), out_channels=16),
+            nn.Conv2d(in_channels=3, kernel_size=(3,3), padding=(1,1), out_channels=32),
             nn.ReLU(),
-            nn.Conv2d(in_channels=16, kernel_size=(3,3), padding=(1,1), out_channels=16),
+            nn.Conv2d(in_channels=32, kernel_size=(3,3), padding=(1,1), out_channels=32),
             nn.ReLU(),
         )
 
         self.convBlock2 = nn.Sequential(
-            nn.Conv2d(in_channels=16, kernel_size=(3,3), padding=(1,1), out_channels=32),
+            nn.Conv2d(in_channels=32, kernel_size=(3,3), padding=(1,1), out_channels=64),
             nn.ReLU(),
-            nn.Conv2d(in_channels=32, kernel_size=(3,3), padding=(1,1), out_channels=32),
+            nn.Conv2d(in_channels=64, kernel_size=(3,3), padding=(1,1), out_channels=64),
             nn.ReLU(),
         )
 
         self.pool = nn.MaxPool2d(kernel_size=(2,2), stride=(2,2))
 
         self.transposeBlock1 = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=32, kernel_size=(2,2), stride=(2,2), out_channels=32), # 200x200
+            nn.ConvTranspose2d(in_channels=64, kernel_size=(2,2), stride=(2,2), out_channels=64), # 200x200
             nn.ReLU(),
-            nn.Conv2d(in_channels=32, kernel_size=(3,3), padding=(1,1), out_channels=32),
+            nn.Conv2d(in_channels=64, kernel_size=(3,3), padding=(1,1), out_channels=64),
             nn.ReLU(),
         )
 
         self.transposeBlock2 = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=32, kernel_size=(2,2), stride=(2,2), out_channels=16), # 200x200
+            nn.ConvTranspose2d(in_channels=64, kernel_size=(2,2), stride=(2,2), out_channels=32), # 200x200
             nn.ReLU(),
-            nn.Conv2d(in_channels=16, kernel_size=(3,3), padding=(1,1), out_channels=16),
+            nn.Conv2d(in_channels=32, kernel_size=(3,3), padding=(1,1), out_channels=32),
             nn.ReLU()
         )
 
-        self.toClass = nn.Conv2d(in_channels=16, kernel_size=(1,1), out_channels=1)
+        self.toClass = nn.Conv2d(in_channels=32, kernel_size=(1,1), out_channels=1)
        
 
     def forward(self, x):
