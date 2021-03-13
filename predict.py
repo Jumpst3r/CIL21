@@ -10,9 +10,9 @@ import glob
 import cv2
 from PIL import Image, ImageOps
 from pytorch_lightning.callbacks import ModelCheckpoint
-from baseline_training import BaselineMLP
+from baseline_training import FCN
 import matplotlib.pyplot as plt
-model = BaselineMLP.load_from_checkpoint('weights-v1.ckpt')
+model = FCN.load_from_checkpoint('weights.ckpt')
 
 # Iterate through a bunch of pictures in the test set
 
@@ -33,8 +33,6 @@ for image_path in test_imgs:
     model_in /= model_in.std()
     out = model(model_in)
     im = torch.round(F.sigmoid(out[0]))
-    
-
     f, (ax1, ax2) = plt.subplots(1, 2)
     ax1.imshow(opencvImage)
     ax2.imshow(im[0].detach().numpy(), cmap='binary_r')
