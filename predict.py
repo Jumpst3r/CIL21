@@ -10,14 +10,14 @@ import glob
 import cv2
 from PIL import Image, ImageOps
 from pytorch_lightning.callbacks import ModelCheckpoint
-from baseline_training import FCN
+from train import FCN
 import matplotlib.pyplot as plt
 model = FCN.load_from_checkpoint('weights.ckpt')
 
 # Iterate through a bunch of pictures in the test set
 
-#test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
-test_imgs = glob.glob('training/training/images/*.png')
+test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
+#test_imgs = glob.glob('training/training/images/*.png')
 for image_path in test_imgs:
     im = Image.open(image_path)
     im_org = Image.open(image_path)
