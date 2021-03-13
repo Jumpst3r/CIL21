@@ -11,7 +11,6 @@ import cv2
 from PIL import Image, ImageOps
 from pytorch_lightning.callbacks import ModelCheckpoint
 from baseline_training import BaselineMLP
-from feature_extractor import PATCH_SIZE
 import matplotlib.pyplot as plt
 model = BaselineMLP.load_from_checkpoint('weights-v1.ckpt')
 
@@ -28,31 +27,15 @@ for image_path in test_imgs:
     scaled_org = cv2.resize(np_im_org, dsize=(400, 400), interpolation=cv2.INTER_LANCZOS4)
     opencvImage = scaled_org.copy()
     original = opencvImage.copy()
-    np_im = scaled
-    patches_per_row = (np_im.shape[0]) // PATCH_SIZE
-    features = np.zeros(shape=(patches_per_row**2, 3, PATCH_SIZE, PATCH_SIZE))
-    ft_idx = 0
-    for y in range(0,patches_per_row*PATCH_SIZE,PATCH_SIZE):
-        for x in range(0,patches_per_row*PATCH_SIZE,PATCH_SIZE):
-                patch = np_im[y:y+PATCH_SIZE,x:x+PATCH_SIZE]
-                features[ft_idx] = np.moveaxis(patch,-1,0)
-                ft_idx += 1
-
-    model_in = torch.from_numpy(features).to(torch.float32)
-    print("MEAN: ",  model_in.mean())
-    print("STD: ",  model_in.std())
+    np_im = np.moveaxis(scaled,-1,0)
+    model_in = torch.from_numpy(np_im).to(torch.float32).unsqueeze(0)
     model_in -= model_in.mean()
     model_in /= model_in.std()
-    out = model(model_in).view(-1,2)
-    # Draw predictions on image :
-    ft_idx = 0
-    for y in range(0,patches_per_row*PATCH_SIZE,PATCH_SIZE):
-        for x in range(0,patches_per_row*PATCH_SIZE,PATCH_SIZE):
-                cv2.rectangle(opencvImage, (x, y), (x+PATCH_SIZE, y+PATCH_SIZE), (255,0,0) if out[ft_idx][1] > out[ft_idx][0] else (0,255,0,0.4), -1)
-                ft_idx += 1
+    out = model(model_in)
+    im = torch.round(F.sigmoid(out[0]))
+    
 
-    res = cv2.addWeighted(original, 1.0, opencvImage, 0.25, 1)
-    cv2.imshow('input / prediction', np.concatenate((res,cv2.cvtColor(scaled, cv2.COLOR_RGB2BGR)), axis=1))
-    cv2.waitKey()
-    # cv2.imshow('debug_image', opencvImage)
-    # cv2.waitKey()
+    f, (ax1, ax2) = plt.subplots(1, 2)
+    ax1.imshow(opencvImage)
+    ax2.imshow(im[0].detach().numpy(), cmap='binary_r')
+    plt.show()
