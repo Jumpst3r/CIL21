@@ -11,84 +11,9 @@ import glob
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data.sampler import WeightedRandomSampler
 import matplotlib.pyplot as plt
-from utils import IoU
 from torchvision import transforms
 import matplotlib.pyplot as plt
-
-class FCN(pl.LightningModule):
-
-    def __init__(self):
-        super().__init__()
-
-        self.convBlock1 = nn.Sequential(
-            nn.Conv2d(in_channels=3, kernel_size=(3,3), padding=(1,1), out_channels=32),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=32, kernel_size=(3,3), padding=(1,1), out_channels=32),
-            nn.ReLU(),
-        )
-
-        self.convBlock2 = nn.Sequential(
-            nn.Conv2d(in_channels=32, kernel_size=(3,3), padding=(1,1), out_channels=64),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=64, kernel_size=(3,3), padding=(1,1), out_channels=64),
-            nn.ReLU(),
-        )
-
-        self.pool = nn.MaxPool2d(kernel_size=(2,2), stride=(2,2))
-
-        self.transposeBlock1 = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=64, kernel_size=(2,2), stride=(2,2), out_channels=64), # 200x200
-            nn.ReLU(),
-            nn.Conv2d(in_channels=64, kernel_size=(3,3), padding=(1,1), out_channels=64),
-            nn.ReLU(),
-        )
-
-        self.transposeBlock2 = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=64, kernel_size=(2,2), stride=(2,2), out_channels=32), # 200x200
-            nn.ReLU(),
-            nn.Conv2d(in_channels=32, kernel_size=(3,3), padding=(1,1), out_channels=32),
-            nn.ReLU()
-        )
-
-        self.toClass = nn.Conv2d(in_channels=32, kernel_size=(1,1), out_channels=1)
-       
-
-    def forward(self, x):
-        x1 = self.convBlock1(x)
-        x1_r = self.pool(x1)
-        
-        x2 = self.convBlock2(x1_r)
-        x2_r = self.pool(x2)
-
-        x_up_1 = self.transposeBlock1(x2_r)
-        x_up_1 += x2
-
-        x_up_2 = self.transposeBlock2(x_up_1)
-        x_up_2 += x1
-
-        x = self.toClass(x_up_2)
-
-        return x
-
-    def training_step(self, batch, batch_idx):
-        x, y = batch
-        out = self.forward(x)
-        loss = F.binary_cross_entropy_with_logits(out, y)
-        self.log('training loss', loss)
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        x, y = batch
-        out = self.forward(x)
-        loss = F.binary_cross_entropy_with_logits(out, y)
-        iou = IoU(y,out)
-        self.log('validation IoU', iou)
-        return loss
-
-    def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        return optimizer
-
+from models.unet import UNet
 
 class RoadDataset(Dataset):
 
@@ -130,20 +55,19 @@ if __name__ == '__main__':
    
     dataset = RoadDataset(root_dir_images='training/training/images/',root_dir_gt='training/training/groundtruth/')
     num_samples_total = len(dataset)
-    num_train = int(0.8 * num_samples_total)
+    num_train = int(0.9 * num_samples_total)
     num_val = num_samples_total - num_train
     train, val = random_split(dataset, [num_train, num_val])
 
-    train_dataloader = DataLoader(train, batch_size=20, num_workers=1)
-    val_dataloader =  DataLoader(val, batch_size=20, num_workers=1)
+    train_dataloader = DataLoader(train, batch_size=5, num_workers=3)
+    val_dataloader =  DataLoader(val, batch_size=5, num_workers=3)
 
     checkpoint_callback = ModelCheckpoint(
         dirpath='./',
         filename='weights',
-        monitor='validation IoU',
-        mode='max'
+        monitor='validation loss',
+        mode='min'
     )
-
-    fcn = FCN()
+    fcn = UNet(3,1)
     trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=1000, gpus=1)
     trainer.fit(fcn,train_dataloader,val_dataloader)
