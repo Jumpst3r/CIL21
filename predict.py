@@ -12,13 +12,14 @@ from PIL import Image, ImageOps
 from pytorch_lightning.callbacks import ModelCheckpoint
 from models.unet import UNet
 import matplotlib.pyplot as plt
+from post import crf
 
 model = UNet.load_from_checkpoint('weights.ckpt')
 
 # Iterate through a bunch of pictures in the test set
 
 test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
-# test_imgs = glob.glob('training/training/images/*.png')
+# test_imgs = sorted(glob.glob('training/training/images/*.png'))
 for image_path in test_imgs:
     im = Image.open(image_path)
     im_org = Image.open(image_path)
@@ -29,7 +30,11 @@ for image_path in test_imgs:
     model_in /= model_in.std()
     out = model(model_in)
     im = torch.round(F.sigmoid(out[0]))
-    f, (ax1, ax2) = plt.subplots(1, 2)
+    kernel = np.ones((5,5),np.uint8)
+    dilation = cv2.dilate(im[0].detach().numpy(),kernel,iterations = 1)
+    im2 = crf(np_im_org, torch.tensor(dilation).unsqueeze(0))
+    f, (ax1, ax2, ax3) = plt.subplots(1, 3)
     ax1.imshow(np_im_org)
     ax2.imshow(im[0].detach().numpy(), cmap='binary_r')
+    ax3.imshow(im2, cmap='binary_r')
     plt.show()
