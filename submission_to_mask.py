@@ -1,12 +1,12 @@
 #!/usr/bin/python
 import os
 import sys
-import Image
+from PIL import Image
 import math
 import matplotlib.image as mpimg
 import numpy as np
 
-label_file = 'dummy_submission.csv'
+label_file = 'test_submission.csv'
 
 h = 16
 w = h

@@ -1,7 +1,10 @@
 """ Full assembly of the parts to form the complete network """
+# adapted from https://github.com/milesial/Pytorch-UNet
 
 import torch.nn.functional as F
 import pytorch_lightning as pl
+from torchvision.ops.focal_loss import sigmoid_focal_loss
+from .utils import IoU
 
 from .unet_parts import *
 
@@ -39,16 +42,16 @@ class UNet(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         out = self.forward(x)
-        loss = F.cross_entropy(out, y, weight=torch.tensor([1,1.]))
+        loss = F.binary_cross_entropy_with_logits(out, y)
         self.log('training loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         out = self.forward(x)
-        loss = F.cross_entropy(out, y, weight=torch.tensor([1,1.]))
-        _f1_loss = f1_loss(y,out)
-        self.log('F1 val', _f1_loss)
+        loss = F.binary_cross_entropy_with_logits(out, y)
+        iou = IoU(y,out)
+        self.log('IoU val', iou)
         return loss
 
     def configure_optimizers(self):

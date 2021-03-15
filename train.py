@@ -51,7 +51,7 @@ class RoadDataset(Dataset):
             gt = stack_transformed[3]
 
 
-        return image, gt
+        return image, gt.unsqueeze(0)
 
 def vizualize(x,y):
     """Visualize a tensor pair, where x is a tensor of shape [1,3,width,height] and y is a tensor of shape [1,width, height]
@@ -68,21 +68,21 @@ if __name__ == '__main__':
 
     dataset = RoadDataset(root_dir_images='training/training/images/',root_dir_gt='training/training/groundtruth/', transform=transforms.RandomAffine(90, translate=[0.1,0.2], scale=[0.8,1.5], shear=10))
     num_samples_total = len(dataset)
-    num_train = int(0.9 * num_samples_total)
+    num_train = int(0.7 * num_samples_total)
     num_val = num_samples_total - num_train
     train, val = random_split(dataset, [num_train, num_val])
 
 
-    train_dataloader = DataLoader(train, batch_size=1, num_workers=1)
-    val_dataloader =  DataLoader(val, batch_size=1, num_workers=1)
+    train_dataloader = DataLoader(train, batch_size=5, num_workers=5)
+    val_dataloader =  DataLoader(val, batch_size=, num_workers=5)
     
     # for x,y in train_dataloader: vizualize(x,y)
 
     checkpoint_callback = ModelCheckpoint(
         dirpath='./',
         filename='weights',
-        monitor='validation loss',
-        mode='min'
+        monitor='IoU val',
+        mode='max'
     )
     fcn = UNet()
     trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=1000, gpus=1)

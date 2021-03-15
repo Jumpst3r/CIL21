@@ -30,7 +30,7 @@ def crf(original_image, annotated_image):
     U = unary_from_softmax(_tmp.reshape(2,-1))
     d.setUnaryEnergy(U)
 
-    d.addPairwiseGaussian(sxy=5, compat=20, kernel=dcrf.DIAG_KERNEL,
+    d.addPairwiseGaussian(sxy=10, compat=50, kernel=dcrf.DIAG_KERNEL,
                           normalization=dcrf.NORMALIZE_SYMMETRIC)
 
     d.addPairwiseBilateral(sxy=50, srgb=50, rgbim=original_image,
