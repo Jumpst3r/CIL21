@@ -140,3 +140,8 @@ cython_debug/
 # my stuff
 *.npy
 lightning_logs/*
+out
+train_logs
+.idea
+*.ckpt
+tmp

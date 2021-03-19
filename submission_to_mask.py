@@ -1,12 +1,14 @@
 #!/usr/bin/python
 import os
 import sys
-import Image
+from PIL import Image
 import math
 import matplotlib.image as mpimg
 import numpy as np
 
-label_file = 'dummy_submission.csv'
+label_file = 'CIL21_unet_janik_1_submission.csv'
+
+os.makedirs('tmp', exist_ok=True)
 
 h = 16
 w = h
@@ -45,10 +47,10 @@ def reconstruct_from_labels(image_id):
 
         im[j:je, i:ie] = binary_to_uint8(adata)
 
-    Image.fromarray(im).save('prediction_' + '%.3d' % image_id + '.png')
+    Image.fromarray(im).save('tmp/prediction_' + '%.3d' % image_id + '.png')
 
     return im
 
-for i in range(1, 5):
+for i in range(1, 223):
     reconstruct_from_labels(i)
    
