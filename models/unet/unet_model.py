@@ -3,8 +3,7 @@
 
 import torch.nn.functional as F
 import pytorch_lightning as pl
-from torchvision.ops.focal_loss import sigmoid_focal_loss
-from .utils import IoU
+from .utils import IoU, dice_loss
 
 from .unet_parts import *
 
@@ -42,18 +41,41 @@ class UNet(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         out = self.forward(x)
-        loss = F.binary_cross_entropy_with_logits(out, y)
+        weights = torch.ones(size=y.shape, dtype=torch.float32).to(self.device)
+        total = torch.sum((y==1) | (y==0), dim=(1,2,3))
+        pos_samples = torch.sum((y==1), dim=(1,2,3))
+        neg_samples = torch.sum((y==0), dim=(1,2,3))
+        try:
+            weights[:,y[0]==0] =  (pos_samples / total).unsqueeze(1)
+            weights[:,y[1]==1] =  (neg_samples / total).unsqueeze(1)
+            loss = F.binary_cross_entropy_with_logits(out, y, weight=weights)
+        except IndexError:
+            loss = F.binary_cross_entropy_with_logits(out, y)
         self.log('training loss', loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         out = self.forward(x)
-        loss = F.binary_cross_entropy_with_logits(out, y)
+        weights = torch.ones(size=y.shape, dtype=torch.float32).to(self.device)
+        total = torch.sum((y==1) | (y==0), dim=(1,2,3))
+        pos_samples = torch.sum((y==1), dim=(1,2,3))
+        neg_samples = torch.sum((y==0), dim=(1,2,3))
+        try:
+            weights[:,y[0]==0] =  (pos_samples / total).unsqueeze(1)
+            weights[:,y[1]==1] =  (neg_samples / total).unsqueeze(1)
+            loss = F.binary_cross_entropy_with_logits(out, y, weight=weights)
+        except IndexError:
+            loss = F.binary_cross_entropy_with_logits(out, y)
+
         iou = IoU(y,out)
         self.log('IoU val', iou)
-        return loss
+        self.log('loss val', loss)
+        return {'loss val':loss, 'IoU val': iou}
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        #lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+        #scheduler = {'scheduler': lr_scheduler, 'interval': 'step', 'monitor': 'training loss'}
+
         return optimizer

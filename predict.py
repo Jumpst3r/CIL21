@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from post import crf
 from tqdm import tqdm
 
-model = UNet.load_from_checkpoint('weights-v1.ckpt')
+model = UNet.load_from_checkpoint('weights-v7.ckpt')
 
 # Iterate through a bunch of pictures in the test set
 
@@ -31,14 +31,13 @@ for image_path in tqdm(test_imgs):
     model_in -= model_in.mean()
     model_in /= model_in.std()
     out = model(model_in)
-    im = torch.round(F.sigmoid(out[0]))
-    kernel = np.ones((5,5),np.uint8)
-    dilation = cv2.dilate(im[0].detach().numpy(),kernel,iterations = 0)
-    im2 = crf(np_im_org, torch.tensor(dilation).unsqueeze(0))
+    im = np.array(F.sigmoid(out[0]).detach().numpy())
+   
+    im2 = crf(np_im_org, im)
     '''
     f, (ax1, ax2, ax3) = plt.subplots(1, 3)
     ax1.imshow(np_im_org)
-    ax2.imshow(im[0].detach().numpy(), cmap='binary_r')
+    ax2.imshow(im[0], cmap='binary_r')
     ax3.imshow(im2, cmap='binary_r')
     plt.show()
     '''
