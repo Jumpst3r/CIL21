@@ -43,12 +43,12 @@ class UNet(pl.LightningModule):
         out = self.forward(x)
         weights = torch.ones(size=y.shape, dtype=torch.float32).to(self.device)
         total = torch.sum((y==1) | (y==0), dim=(1,2,3))
-        pos_samples = torch.sum((y==1), dim=(1,2,3))
-        neg_samples = torch.sum((y==0), dim=(1,2,3))
+        pos_samples = torch.sum((y==0), dim=(1,2,3))
+        neg_samples = torch.sum((y==1), dim=(1,2,3))
         try:
             weights[:,y[0]==0] =  (pos_samples / total).unsqueeze(1)
             weights[:,y[1]==1] =  (neg_samples / total).unsqueeze(1)
-            loss = F.binary_cross_entropy_with_logits(out, y, weight=weights)
+            loss = F.binary_cross_entropy_with_logits(out, y)
         except IndexError:
             loss = F.binary_cross_entropy_with_logits(out, y)
         self.log('training loss', loss)
@@ -59,12 +59,12 @@ class UNet(pl.LightningModule):
         out = self.forward(x)
         weights = torch.ones(size=y.shape, dtype=torch.float32).to(self.device)
         total = torch.sum((y==1) | (y==0), dim=(1,2,3))
-        pos_samples = torch.sum((y==1), dim=(1,2,3))
-        neg_samples = torch.sum((y==0), dim=(1,2,3))
+        pos_samples = torch.sum((y==0), dim=(1,2,3))
+        neg_samples = torch.sum((y==1), dim=(1,2,3))
         try:
             weights[:,y[0]==0] =  (pos_samples / total).unsqueeze(1)
             weights[:,y[1]==1] =  (neg_samples / total).unsqueeze(1)
-            loss = F.binary_cross_entropy_with_logits(out, y, weight=weights)
+            loss = F.binary_cross_entropy_with_logits(out, y)
         except IndexError:
             loss = F.binary_cross_entropy_with_logits(out, y)
 
@@ -74,7 +74,7 @@ class UNet(pl.LightningModule):
         return {'loss val':loss, 'IoU val': iou}
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3, weight_decay=1e-4, amsgrad=True)
         #lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
         #scheduler = {'scheduler': lr_scheduler, 'interval': 'step', 'monitor': 'training loss'}
 

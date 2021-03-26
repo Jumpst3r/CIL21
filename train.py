@@ -71,7 +71,7 @@ def dataset_transform():
     images_names = sorted(glob.glob('/home/nicolas/new-dataset/test/sat/*.png'))
     gt_name = sorted(glob.glob('/home/nicolas/new-dataset/test/map/*.png'))
 
-    for _ in tqdm(range(50)):
+    for _ in tqdm(range(200)):
         for im_n, gt_n in zip(images_names, gt_name):
             pil_im = Image.open(im_n)
             pil_gt = Image.open(gt_n)
@@ -95,12 +95,12 @@ def dataset_transform():
 
 
 if __name__ == '__main__':
-    # dataset_transform()
+    #dataset_transform()
     my_transforms = transforms.Compose([
-        transforms.RandomAffine(90, translate=[0.1,0.2], scale=[0.8,1.5], shear=2),
+        transforms.RandomAffine(5, translate=[0.1,0.2], scale=[0.8,1.5], shear=0),
         #transforms.RandomResizedCrop(400, scale=(0.8, 1.0), ratio=(1., 1.), interpolation=Image.NEAREST),
-        transforms.RandomHorizontalFlip(p=0.3),
-        transforms.RandomVerticalFlip(p=0.5)
+        #transforms.RandomHorizontalFlip(p=0.5),
+        #transforms.RandomVerticalFlip(p=0.5)
     ])
 
     dataset = RoadDataset(root_dir_images='training/training/images/',root_dir_gt='training/training/groundtruth/', transform=my_transforms)
@@ -110,8 +110,8 @@ if __name__ == '__main__':
     train, val = random_split(dataset, [num_train, num_val])
 
 
-    train_dataloader = DataLoader(train, batch_size=5)
-    val_dataloader =  DataLoader(val, batch_size=5)
+    train_dataloader = DataLoader(train, batch_size=8, num_workers=8)
+    val_dataloader =  DataLoader(val, batch_size=5, num_workers=8)
     
     # for x,y in train_dataloader: vizualize(x,y)
 
@@ -121,6 +121,6 @@ if __name__ == '__main__':
         monitor='IoU val',
         mode='max'
     )
-    fcn = UNet.load_from_checkpoint('weights-v7.ckpt')
+    fcn = UNet()
     trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=1000, gpus=1)
     trainer.fit(fcn,train_dataloader,val_dataloader)

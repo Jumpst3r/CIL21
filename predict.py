@@ -15,14 +15,16 @@ import matplotlib.pyplot as plt
 from post import crf
 from tqdm import tqdm
 
-model = UNet.load_from_checkpoint('weights-v7.ckpt')
+model = UNet.load_from_checkpoint('weights-v3.ckpt')
 
 # Iterate through a bunch of pictures in the test set
 
 
 test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
 # test_imgs = sorted(glob.glob('training/training/images/*.png'))
+cnt = 0
 for image_path in tqdm(test_imgs):
+    cnt += 1
     im = Image.open(image_path)
     im_org = Image.open(image_path)
     np_im = np.moveaxis(np.array(im),-1,0)
