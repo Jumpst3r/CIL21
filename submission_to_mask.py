@@ -6,7 +6,7 @@ import math
 import matplotlib.image as mpimg
 import numpy as np
 
-label_file = 'cons_thresh.csv'
+label_file = 'out.csv'
 
 os.makedirs('tmp', exist_ok=True)
 

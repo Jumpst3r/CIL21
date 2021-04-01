@@ -5,7 +5,7 @@ from helpers import *
 from torch.utils.data import DataLoader, random_split
 from pytorch_lightning.callbacks import ModelCheckpoint
 from data.AerialShots import AerialShots
-from models.UNet import UNet
+from models.RepeatedUNet import UNet
 # from models.UNetLarge import UNet
 import glob
 import random
@@ -29,7 +29,7 @@ data_paths_val = data_paths[num_train:]
 train = AerialShots(data_paths_train, augment=True)
 val = AerialShots(data_paths_val, augment=False)
 train_dataloader = DataLoader(train, batch_size=6, shuffle=True, num_workers=8)
-val_dataloader = DataLoader(val, batch_size=2, shuffle=False, num_workers=8)
+val_dataloader = DataLoader(val, batch_size=1, shuffle=False, num_workers=8)
 
 # asd
 #vis(next(iter(train_dataloader)))

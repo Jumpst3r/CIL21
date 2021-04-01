@@ -38,7 +38,7 @@ def masks_to_submission(submission_filename, *image_filenames):
 
 
 if __name__ == '__main__':
-    submission_filename = 'cons_thresh.csv'
+    submission_filename = 'out.csv'
     image_filenames = glob.glob('out/*.png')
     image_filenames.sort(key=lambda f: int(re.sub('\D', '', f)))
     masks_to_submission(submission_filename, *image_filenames)

@@ -12,7 +12,7 @@ class AerialShots(torch.utils.data.Dataset):
         self.data_paths = data_paths
         self.augment = augment
 
-        self.img_size = 608
+        self.img_size = 400
 
         self.color_transforms = transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1)
         self.spatial_transforms = transforms.Compose([
