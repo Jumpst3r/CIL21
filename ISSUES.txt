@@ -1,0 +1,1 @@
+the model cuts out wholes in the street where cars are -> try placing random gaussian blobs in the image s.t. model learns to ignore occlusions

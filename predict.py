@@ -3,7 +3,7 @@ from tqdm import tqdm
 from PIL import Image, ImageOps
 import numpy as np
 import torch
-from models.RepeatedUNet import UNet
+from models.StackedUNet import UNet
 import matplotlib.pyplot as plt
 import os
 import cv2
@@ -11,10 +11,8 @@ from postprocessing.crf import dense_crf
 
 with torch.no_grad():
 
-    model = UNet.load_from_checkpoint('weights_rep_4.ckpt')
+    model = UNet.load_from_checkpoint('weights_stacked_8.ckpt')
     os.makedirs('out', exist_ok=True)
-    os.makedirs('out2', exist_ok=True)
-    os.makedirs('out3', exist_ok=True)
 
     test_imgs = glob.glob(r'test_images/test_images/*.png')
     for image_path in tqdm(test_imgs):
@@ -49,7 +47,6 @@ with torch.no_grad():
         model_in = model_in_img
         preds = model(model_in.unsqueeze(0))
         out = preds[-1]
-
 
         # crf_output = dense_crf(np_im_org, out[0][0].detach().cpu().numpy())
         # final_pred = (crf_output*255).astype(np.uint8)
