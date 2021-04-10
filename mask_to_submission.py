@@ -6,7 +6,7 @@ import matplotlib.image as mpimg
 import re
 import glob
 
-foreground_threshold = 0.25 # percentage of pixels > 1 required to assign a foreground label to a patch
+foreground_threshold = 0.5  # percentage of pixels > 1 required to assign a foreground label to a patch
 
 # assign a label to a patch
 def patch_to_label(patch):

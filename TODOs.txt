@@ -1,0 +1,23 @@
+- experiment with learning rate + scheduler for the stacked unet
+
+- train on massachusetts dataset + refining only on given data
+
+- 16-bit precision training
+
+- since the model is anyways only evaluated at 16 block resolution:
+	first decrease res. to ~200 using convolutions (similar to hourglass) & predict a 200x200 segmentation,
+	then just upsample using nearest neighbor upsampling)
+	-> like this I can train larger models at larger batch sizes
+	
+- try just using the newest model to see if using the smallest validation loss s even meaningful
+
+- implement thesholding + per-patch accuracy comp, like what is used on kaggle & use that during evaluation instead of the logits loss (comp both but save best based on accuracy)
+
+- dropout
+
+- look at low acc validation images
+
+
+DONE:
+- set up comet, s.t. I can see for which experiment I actually get the lowest validation loss
+	https://www.comet.ml/docs/python-sdk/pytorch/
