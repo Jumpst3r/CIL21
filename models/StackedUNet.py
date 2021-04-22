@@ -3,11 +3,11 @@ import torch
 import torch.nn as nn
 from helpers import get_accuracy
 import cv2
+# from vggloss import VGGLoss
+
 
 def conv_block(in_c, out_c, k=3, p=1):
-
     mid_c = out_c
-
     return nn.Sequential(
         nn.Conv2d(in_channels=in_c, out_channels=mid_c, kernel_size=k, padding=p),
         nn.BatchNorm2d(mid_c),
@@ -114,13 +114,14 @@ class UNetBlock(nn.Module):
 
 class UNet(pl.LightningModule):
 
-    def __init__(self, lr=1e-4, stacks=4):
+    def __init__(self, lr=1e-4, stacks=8):
         super(UNet, self).__init__()
 
         # optimization parameters
         self.lr = lr
         self.stacks = stacks
         self.loss_fn = nn.BCELoss(reduction='sum')
+        # self.loss_fn = VGGLoss()
         self.loss_weights = [1] * self.stacks
         self.loss_weights[-1] = self.stacks - 1
 

@@ -12,8 +12,8 @@ os.makedirs('tmp', exist_ok=True)
 
 h = 16
 w = h
-imgwidth = int(math.ceil((600.0/w))*w)
-imgheight = int(math.ceil((600.0/h))*h)
+imgwidth = int(math.ceil((608.0/w))*w)
+imgheight = int(math.ceil((608.0/h))*h)
 nc = 3
 
 # Convert an array of binary labels to a uint8
@@ -47,7 +47,7 @@ def reconstruct_from_labels(image_id):
 
         im[j:je, i:ie] = binary_to_uint8(adata)
 
-    Image.fromarray(im).save('tmp/prediction_' + '%.3d' % image_id + '.png')
+    Image.fromarray(im).save('tmp/satImage_' + '%.3d' % image_id + '.png')
 
     return im
 

@@ -1,1 +1,16 @@
-the model cuts out holes in the street where cars are -> try placing random gaussian blobs in the image s.t. model learns to ignore occlusions
+- the model cuts out holes in the street where cars are -> try placing random gaussian blobs in the image s.t. model learns to ignore occlusions
+
+- I train at 608 x 608 (bilinear upsampling from 400 x 400). at test time it doesn't work well on the 608 x 608 images. as a hack I firstscale down to 400, then back up to 608
+This could probably b solved more elegantly
+e.g. input 400x400, output 38x38
+
+- try different interpolation methods for the stacked upsampling (also transpose-convolutions with dilation of 16 or whatever)
+
+- atrous conv (dilation) instead of max pooling
+
+- use 
+
+- pretrain on deep globe (also to eval on it!), then finetune on CIL data
+
+- backbone, i.e. pretrained CNN (from pytorch) takes the input, produces a feature map, on which is then the input of our architecture
+https://pytorch.org/vision/stable/models.html

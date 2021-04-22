@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader, random_split
 from pytorch_lightning.callbacks import ModelCheckpoint
 from data.AerialShots import AerialShots
 from models.StackedUNet import UNet
+# from models.RepeatedUNet import UNet
 import glob
 import random
 from pytorch_lightning.loggers import CometLogger
@@ -22,22 +23,21 @@ def get_data_paths(img_dir, labels_dir):
 
 
 # hyperparam
-train_split = 0.7
 num_epochs = 1000
 lr = 1e-4
-n_stacks = 4
-batchsize = 8
+n_stacks = 8
+batchsize = 4
 img_size = 160
 normalize = False
 save_last = False
 dropout = False
 train_sets = 'cil'  # cil = CIL data only / cil_ms  = CIL data + massachusetts road dataset
-weights_name = "weights_stacks-{}_bs-{}_imgsize-{}_trainsets-{}_lr-{}_dropout-{}_norm-{}".format(n_stacks, batchsize, img_size, train_sets, lr, dropout, normalize)
+stacking_type = 'stack'
+weights_name = "weights_{}-{}_bs-{}_imgsize-{}_trainsets-{}_lr-{}_dropout-{}_norm-{}".format(stacking_type, n_stacks, batchsize, img_size, train_sets, lr, dropout, normalize)
 
 # additional stuff for he logger
 data_filename = 'data/AerialShots.py'
 model_filename = 'models/StackedUNet.py'
-stacking_type = 'no weight sharing between stacks'
 sched_type = 'StepLR(step_size=80, gamma=0.5)'
 
 # data
@@ -74,12 +74,12 @@ checkpoint_callback = ModelCheckpoint(
         save_last=save_last
     )
 
-# unet = UNet(lr=lr, stacks=n_stacks)
-unet = UNet.load_from_checkpoint('weights_stacks-4_bs-10_imgsize-160_trainsets-cil_lr-0.0001_savelast-True_norm-False.ckpt')
+unet = UNet(lr=lr, stacks=n_stacks)
+# unet = UNet.load_from_checkpoint('weights_stacks-4_bs-10_imgsize-160_trainsets-cil_lr-0.0001_savelast-True_norm-False.ckpt')
 
 comet_logger = CometLogger(
     api_key="tz8fhwoMrSi1d1s4tcKDME5uw",
-    project_name="CIL2",
+    project_name="CIL3",
 )
 comet_logger.experiment.set_name(weights_name)
 comet_logger.experiment.log_code(file_name=data_filename)
@@ -87,7 +87,7 @@ comet_logger.experiment.log_code(file_name=model_filename)
 
 comet_logger.log_hyperparams(
     {
-        "type of stacking": stacking_type,
+        "stacking_type": stacking_type,
         "number of UNET stacks": n_stacks,
         "initial lr": lr,
         "lr scheduler": sched_type,

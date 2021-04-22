@@ -1,7 +1,6 @@
 .idea
 __pycache__
 weights*
-out*
+out_log
 tmp
-train_logs
-trash.py
+scripts

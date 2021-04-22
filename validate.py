@@ -13,7 +13,7 @@ from helpers import get_accuracy
 # with torch.no_grad():
 
 erode = False
-weight_file = r'weights/weights_stacks-4_bs-1_imgsize-400_trainsets-cil_lr-0.0001_savelast-True_norm-False.ckpt'
+weight_file = r'weights/weights_stack-8_bs-4_imgsize-160_trainsets-cil_lr-0.0001_dropout-False_norm-False_0.25.ckpt'
 model = UNet.load_from_checkpoint(weight_file)
 img_size = int(weight_file.split('imgsize-')[-1].split('_')[0])
 
