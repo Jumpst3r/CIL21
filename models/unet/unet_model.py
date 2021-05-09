@@ -14,7 +14,7 @@ class StackedUNet(pl.LightningModule):
         super(StackedUNet, self).__init__()
         self.initBlock = UNet(n_channels=3)
         
-        self.blocks = nn.ModuleList(UNet(n_channels=4) for _ in range(nb_blocks))
+        self.blocks = nn.ModuleList(UNet(n_channels=4) for _ in range(nb_blocks-1))
         
         self.lr = lr
         self.training = True
