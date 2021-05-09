@@ -1,126 +1,59 @@
 import os
+from comet_ml import Experiment
 import torch
 from torch import nn
 import torch.nn.functional as F
-from PIL import Image
+from PIL import Image,ImageOps
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, random_split, Dataset
 from pytorch_lightning.metrics import functional as FM
 import numpy as np
-import glob
 from pytorch_lightning.callbacks import ModelCheckpoint
-from torch.utils.data.sampler import WeightedRandomSampler
 import matplotlib.pyplot as plt
 from torchvision import transforms
 import matplotlib.pyplot as plt
-from models.unet import UNet
+from models.unet import StackedUNet
+# from models.unet.janikunet import StackedUNetPL
 from tqdm import tqdm
-cnt = 0
+from pytorch_lightning.loggers import CometLogger
+import pytorch_lightning
+from sklearn.model_selection import KFold
+from dataset import ArealDataset
 
-class RoadDataset(Dataset):
+pl.seed_everything(2)
 
-    def __init__(self, root_dir_images, root_dir_gt, transform=None):
-        self.images = sorted(glob.glob(root_dir_images + '*.png'))
-        self.gt = sorted(glob.glob(root_dir_gt + '*.png'))
-        self.transform = transform
-
-
-    def __len__(self):
-        return len(self.images)
-
-    def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-
-        impath = self.images[idx]
-        gtpath = self.gt[idx]
-        pil_im = Image.open(impath)
-        pil_gt = Image.open(gtpath)
-        image =  transforms.ToTensor()(pil_im)
-        gt = torch.tensor(np.where(np.array(pil_gt) >=  1., 1., 0.))
-        image -= image.mean()
-        image /= image.std()
-
-        stacked = torch.zeros((4, image.shape[1], image.shape[2]))
-        stacked[0] = image[0]
-        stacked[1] = image[1]
-        stacked[2] = image[2]
-        stacked[3] = gt
-
-        if self.transform is not None:
-            stack_transformed = self.transform(stacked)
-            image = stack_transformed[0:3]
-            gt = stack_transformed[3]
-
-
-        return image, gt.unsqueeze(0)
-
-def vizualize(x,y):
-    """Visualize a tensor pair, where x is a tensor of shape [1,3,width,height] and y is a tensor of shape [1,width, height]
-    """    
-    f, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.axis('off')
-    ax2.axis('off')
-    ax1.imshow(np.moveaxis(np.array(x[0]),0,-1))
-    ax2.imshow(y[0][0], cmap='binary_r')
-    plt.show()
-
-
-def dataset_transform():
-    global cnt
-    images_names = sorted(glob.glob('/home/nicolas/new-dataset/test/sat/*.png'))
-    gt_name = sorted(glob.glob('/home/nicolas/new-dataset/test/map/*.png'))
-
-    for _ in tqdm(range(200)):
-        for im_n, gt_n in zip(images_names, gt_name):
-            pil_im = Image.open(im_n)
-            pil_gt = Image.open(gt_n)
-            image =  transforms.ToTensor()(pil_im)
-            gt = torch.tensor(np.where(np.array(pil_gt) >=  1, 1., 0.)).unsqueeze(0)
-            transform = transforms.RandomResizedCrop(400, scale=(0.02, 0.02), ratio=(1.,1.))
-            state = torch.get_rng_state()
-            image = transform(image)
-            torch.set_rng_state(state)
-            gt = transform(gt)
-            if gt.mean() < 0.04: continue
-            gt = np.array(gt*255, dtype=np.uint8)[0]
-            im = Image.fromarray(np.array(gt, dtype=np.uint8))
-            global cnt
-            im.save(f'training/training/groundtruth/custom-{cnt}-mask.png')
-            npim = np.moveaxis(np.array(image*255, dtype=np.uint8), 0, -1)
-            im = Image.fromarray(npim)
-            im.save(f'training/training/images/custom-{cnt}-input.png')
-            cnt += 1
-
-
+from sklearn.model_selection import KFold
+import gc
 
 if __name__ == '__main__':
-    #dataset_transform()
-    my_transforms = transforms.Compose([
-        transforms.RandomAffine(5, translate=[0.1,0.2], scale=[0.8,1.5], shear=0),
-        #transforms.RandomResizedCrop(400, scale=(0.8, 1.0), ratio=(1., 1.), interpolation=Image.NEAREST),
-        #transforms.RandomHorizontalFlip(p=0.5),
-        #transforms.RandomVerticalFlip(p=0.5)
-    ])
-
-    dataset = RoadDataset(root_dir_images='training/training/images/',root_dir_gt='training/training/groundtruth/', transform=my_transforms)
-    num_samples_total = len(dataset)
-    num_train = int(0.7 * num_samples_total)
-    num_val = num_samples_total - num_train
-    train, val = random_split(dataset, [num_train, num_val])
-
-
-    train_dataloader = DataLoader(train, batch_size=8, num_workers=8)
-    val_dataloader =  DataLoader(val, batch_size=5, num_workers=8)
+    dataset = ArealDataset(root_dir_images='training/training/images/',root_dir_gt='training/training/groundtruth/', target_size=(128,128))
+    kf = KFold(n_splits=4)
+    val_IoU = []
+    val_F1 = []
+ 
+    for train_indices, test_indices in kf.split(dataset):
+        train_dataset = torch.utils.data.dataset.Subset(dataset,train_indices)
+        test_dataset =   torch.utils.data.dataset.Subset(dataset,test_indices)
+        test_dataset.applyTransforms = False
+        train_dataloader = DataLoader(train_dataset, batch_size=5, pin_memory=True, num_workers=8)
+        test_dataloader = DataLoader(test_dataset, batch_size=5, pin_memory=True, num_workers=8)
+        model = StackedUNet(lr=1e-4)
+        trainer = pl.Trainer(max_epochs=1, gpus=1, stochastic_weight_avg=True, precision=16, deterministic=True)
+        trainer.fit(model,train_dataloader)
+        results = trainer.test(model, test_dataloader, verbose=False)[0]
+        val_IoU.append(results['results'][0])
+        val_F1.append(results['results'][1])
+        del model
+        del trainer
+        del train_dataset
+        del test_dataset
+        del train_dataloader
+        del test_dataloader
+        gc.collect()
+        torch.cuda.empty_cache()
     
-    # for x,y in train_dataloader: vizualize(x,y)
+    print('mean/std IoU:',np.array(val_IoU).mean(), np.array(val_IoU).std())
+    print('mean/std F1:',np.array(val_F1).mean(), np.array(val_F1).std())
+       
+    
 
-    checkpoint_callback = ModelCheckpoint(
-        dirpath='./',
-        filename='weights',
-        monitor='IoU val',
-        mode='max'
-    )
-    fcn = UNet()
-    trainer = pl.Trainer(checkpoint_callback=checkpoint_callback, max_epochs=1000, gpus=1)
-    trainer.fit(fcn,train_dataloader,val_dataloader)

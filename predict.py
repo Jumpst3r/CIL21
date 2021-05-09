@@ -10,12 +10,16 @@ import glob
 import cv2
 from PIL import Image, ImageOps
 from pytorch_lightning.callbacks import ModelCheckpoint
-from models.unet import UNet
+from models.unet import UNet, StackedUNet
 import matplotlib.pyplot as plt
 from post import crf
 from tqdm import tqdm
+from torchvision import transforms
+import albumentations as A
+from albumentations.pytorch.transforms import ToTensorV2
+from dataset_exploration import getnormvals
 
-model = UNet.load_from_checkpoint('weights-v3.ckpt')
+model = StackedUNet().load_from_checkpoint('weights-v1.ckpt').eval().cuda()
 
 # Iterate through a bunch of pictures in the test set
 
@@ -23,27 +27,53 @@ model = UNet.load_from_checkpoint('weights-v3.ckpt')
 test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
 # test_imgs = sorted(glob.glob('training/training/images/*.png'))
 cnt = 0
+
+# The input size on which your model was trained
+SIZE = 100
+
+means, stds = getnormvals()
+
+print(means)
+print(stds)
+
 for image_path in tqdm(test_imgs):
     cnt += 1
-    im = Image.open(image_path)
-    im_org = Image.open(image_path)
-    np_im = np.moveaxis(np.array(im),-1,0)
-    np_im_org = np.array(im_org)
-    model_in = torch.from_numpy(np_im).to(torch.float32).unsqueeze(0)
-    model_in -= model_in.mean()
-    model_in /= model_in.std()
-    out = model(model_in)
-    im = np.array(F.sigmoid(out[0]).detach().numpy())
+    im = np.array(Image.open(image_path))
+    im_org = np.array(Image.open(image_path).resize((SIZE,SIZE)))
+    #np_im = np.moveaxis(np.array(im, dtype=np.float32),-1,0)
+    np_im_org = np.array(im_org, dtype=np.uint8)
+    transform = A.Compose([
+            A.Resize(SIZE,SIZE),
+            A.Normalize(mean=means, std=stds),
+            ToTensorV2(transpose_mask=True)
+        ])
+    tf = transform(image=im)
+    # this transform doesn't include the norm.
+    transform2 = A.Compose([
+            A.Resize(SIZE,SIZE),
+            ToTensorV2(transpose_mask=True)
+        ])
+    tf2 = transform2(image=im_org)
+
+    im = tf['image'].unsqueeze(0).cuda()
+    im_org= tf2['image'].unsqueeze(0)
+
+    y = model(im)
+    out = np.array(F.sigmoid(y[0]).detach().cpu().numpy(), dtype=np.float32)
+    # Assumes a two unit output. out[1] contains the road probas
+    imout = np.array(out[1]>0.6, dtype=np.float32)
    
-    im2 = crf(np_im_org, im)
-    '''
-    f, (ax1, ax2, ax3) = plt.subplots(1, 3)
-    ax1.imshow(np_im_org)
-    ax2.imshow(im[0], cmap='binary_r')
-    ax3.imshow(im2, cmap='binary_r')
+    #im2 = crf(im[0], out)
+    
+    f, (ax1, ax2) = plt.subplots(1, 2)
+    ax1.imshow(np.moveaxis(np.array(tf2['image']), 0,-1))
+    ax2.imshow(imout, cmap='binary_r')
     plt.show()
-    '''
-    im = Image.fromarray(np.array(im2*255, dtype=np.uint8))
+    
+    
+    im = Image.fromarray(np.array(imout*255, dtype=np.uint8)).resize((608,608))
+    im = im.resize((608,608))
     fname = image_path[image_path.rfind('_')-4:]
     im.save('out/' + fname)
+    
     

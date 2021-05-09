@@ -4,7 +4,7 @@ from pydensecrf.utils import (unary_from_softmax, unary_from_labels)
 from skimage.color import gray2rgb, rgba2rgb
 from skimage import img_as_ubyte
 import numpy.random as rd
-NB_ITERATIONS = 10
+NB_ITERATIONS = 50
 """
 Function which returns the labelled image after applying CRF
 adapted from https://github.com/lucasb-eyer/pydensecrf/tree/master/pydensecrf
@@ -12,19 +12,18 @@ adapted from https://github.com/lucasb-eyer/pydensecrf/tree/master/pydensecrf
 
 
 def crf(original_image, annotated_image):
-    original_image = img_as_ubyte(original_image)
+    original_image = np.moveaxis(original_image.detach().cpu().numpy(), 0, -1)
+    original_image = np.array(original_image, dtype=np.uint8)
     # annotated_image = np.moveaxis(annotated_image, -1, 0)
-    probas = np.zeros(shape=(2,original_image.shape[1],original_image.shape[1]), dtype=np.float32)
-    probas[0] = 1 - annotated_image[0]
-    probas[1] = annotated_image[0]
+    probas = annotated_image
 
 
     d = dcrf.DenseCRF2D(original_image.shape[1], original_image.shape[0], 2)
 
-    U = unary_from_softmax(probas.reshape(2, -1), scale=0.2)
+    U = unary_from_softmax(probas.reshape(2, -1))
     d.setUnaryEnergy(U)
 
-    d.addPairwiseBilateral(sxy=3, srgb=120, rgbim=original_image, compat=5)
+    d.addPairwiseBilateral(sxy=1, srgb=100, rgbim=original_image, compat=5)
 
     # This adds the color-independent term, features are the locations only.
     d.addPairwiseGaussian(sxy=2, compat=2)

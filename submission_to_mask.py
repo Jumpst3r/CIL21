@@ -49,6 +49,6 @@ def reconstruct_from_labels(image_id):
 
     return im
 
-for i in range(1, 5):
+for i in range(7, 15):
     reconstruct_from_labels(i)
    
