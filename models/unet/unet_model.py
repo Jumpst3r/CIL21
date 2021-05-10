@@ -43,7 +43,7 @@ class StackedUNet(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         yL = self.forward(x)
-        loss = self.loss(yL[0], y) + self.alpha * sum([self.loss(yhat, y) for yhat in yL[1:]])
+        loss = self.loss(yL[-1], y) + self.alpha * sum([self.loss(yhat, y) for yhat in yL[:-1]])
         self.log('training loss', loss)
         self.log('lr', self.lr)
         return loss

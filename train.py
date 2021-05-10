@@ -40,7 +40,7 @@ if __name__ == '__main__':
         test_dataset.applyTransforms = False
         train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, pin_memory=False, num_workers=8)
         test_dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, pin_memory=False, num_workers=8)
-        model = StackedUNet(lr=1e-3, nb_blocks=1)
+        model = StackedUNet(lr=1e-3, nb_blocks=5)
         trainer = pl.Trainer(max_epochs=MAX_EPOCHS, gpus=1, stochastic_weight_avg=True, precision=16, deterministic=True)
         trainer.fit(model,train_dataloader)
         results = trainer.test(model, test_dataloader, verbose=False)[0]
@@ -66,6 +66,6 @@ if __name__ == '__main__':
         dirpath='./'
     )
     train_dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, pin_memory=False, num_workers=8)
-    model = StackedUNet(lr=1e-4, nb_blocks=1)
+    model = StackedUNet(lr=1e-3, nb_blocks=5)
     trainer = pl.Trainer(max_epochs=MAX_EPOCHS, gpus=1, stochastic_weight_avg=True, precision=16, deterministic=True, checkpoint_callback=checkpoint_callback)
     trainer.fit(model,train_dataloader)
