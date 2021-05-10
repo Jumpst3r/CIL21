@@ -19,7 +19,7 @@ import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 from dataset_exploration import getnormvals
 
-model = StackedUNet().load_from_checkpoint('weights-v1.ckpt').eval().cuda()
+model = StackedUNet(lr=1e-4, nb_blocks=1).load_from_checkpoint('epoch=150-step=3000.ckpt').eval().cuda()
 
 # Iterate through a bunch of pictures in the test set
 
@@ -29,7 +29,7 @@ test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
 cnt = 0
 
 # The input size on which your model was trained
-SIZE = 100
+SIZE = 128
 
 means, stds = getnormvals()
 
@@ -60,16 +60,16 @@ for image_path in tqdm(test_imgs):
 
     y = model(im)
     out = np.array(F.sigmoid(y[0]).detach().cpu().numpy(), dtype=np.float32)
-    # Assumes a two unit output. out[1] contains the road probas
-    imout = np.array(out[1]>0.6, dtype=np.float32)
+
+    imout = np.array(out[0]>0.5, dtype=np.float32)
    
     #im2 = crf(im[0], out)
-    
+    '''
     f, (ax1, ax2) = plt.subplots(1, 2)
     ax1.imshow(np.moveaxis(np.array(tf2['image']), 0,-1))
     ax2.imshow(imout, cmap='binary_r')
     plt.show()
-    
+    '''
     
     im = Image.fromarray(np.array(imout*255, dtype=np.uint8)).resize((608,608))
     im = im.resize((608,608))

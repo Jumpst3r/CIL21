@@ -10,7 +10,7 @@ from .unet_parts import *
 
 
 class StackedUNet(pl.LightningModule):
-    def __init__(self, lr=1e-3, nb_blocks=5):
+    def __init__(self, lr=1e-3, nb_blocks=8):
         super(StackedUNet, self).__init__()
         self.initBlock = UNet(n_channels=3)
         
@@ -19,7 +19,7 @@ class StackedUNet(pl.LightningModule):
         self.lr = lr
         self.training = True
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=1e-5)
-        self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, gamma=0.5, step_size=100, verbose=True)
+        self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, gamma=0.5, step_size=100)
         self.alpha = 0.1
         self.loss = F.binary_cross_entropy_with_logits
         self.IoU = IoU

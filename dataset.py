@@ -48,6 +48,7 @@ class ArealDataset(Dataset):
             self.transform = A.Compose([
                 A.Resize(target_size[0], target_size[1]),
                 # A.ColorJitter(),
+                A.CLAHE(),
                 A.RandomRotate90(),
                 A.VerticalFlip(),
                 A.HorizontalFlip(),
