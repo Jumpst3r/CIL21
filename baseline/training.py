@@ -31,7 +31,11 @@ if __name__ == '__main__':
     val_IoU = []
     val_F1 = []
 
-    for train_indices, test_indices in kf.split(dataset):
+    np.random.seed(2) # just in case global seed doesnt cover numpy
+    idx =  np.random.permutation(np.arange(100))
+    for train_indices_plain, test_indices_plain in kf.split(dataset):
+        train_indices = [idx[i] for i in train_indices_plain]
+        test_indices = [idx[i] for i in test_indices_plain]
         train_dataset = torch.utils.data.dataset.Subset(dataset, train_indices)
         test_dataset = torch.utils.data.dataset.Subset(dataset, test_indices)
         test_dataset.applyTransforms = False
