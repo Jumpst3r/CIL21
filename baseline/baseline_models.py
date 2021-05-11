@@ -17,29 +17,69 @@ performance measure function
 Evaluation method:
     - 4 fold Cross-validation, mean of performance
     - full training set, Kaggle submission performance
-"""
 
-from torchvision import models, transforms, datasets, utils
+
+
 import torch
 from PIL import Image
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from kaggle_dataset import KaggleSet
 from sklearn.model_selection import KFold
+"""
+
 import numpy as np
-
-seg_models = ["fcn_resnet50", "fcn_resnet101", "deeplabv3_resnet50", "deeplabv3_resnet101", "deeplabv3_mobilenet_v3_large",
-          "lraspp_mobilenet_v3_large"]
-
-import os
+from torchvision import models, transforms, datasets, utils
+from torchvision.models.segmentation import fcn_resnet50, fcn_resnet101, deeplabv3_resnet50, deeplabv3_resnet101
 import torch
-from torch import nn
 import torch.nn.functional as F
-from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader, random_split
-from torchvision import transforms
 import pytorch_lightning as pl
 from utils import IoU, DiceBCELoss, IoULoss, FocalLoss, F1
+
+class VisionBaseline(pl.LightningModule):
+    def __init__(self, model, model_opts, loss, optimizer, opt_opts):
+        super().__init__()
+        self.model = model(**model_opts).train()
+        self.loss = loss
+        opts = {"params": self.parameters(), **opt_opts}
+        self.optimizer = optimizer(**opts)
+        self.testIoU = []
+        self.testF1 = []
+        self.IoU = IoU
+
+    def forward(self, x):
+        out = self.model(x)
+        return out['out']
+
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        pred = self.forward(x)
+        loss = self.loss(pred, y)
+        self.log('training loss', loss)
+        return loss
+
+    def configure_optimizers(self):
+        return {
+            'optimizer': self.optimizer,
+            'monitor': 'training loss'
+        }
+
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        out = self.forward(x)
+        iou = self.IoU(out, y)
+        f = F1(out, y)
+        self.testIoU.append(iou.detach().cpu().item())
+        self.testF1.append(f.detach().cpu().item())
+
+    def test_epoch_end(self, outputs):
+        IoU = np.array(self.testIoU).mean()
+        f = np.array(self.testF1).mean()
+        logs = {'IoU': IoU, 'results': (IoU, f)}
+        print("len:", len(self.testIoU), "IoU", IoU, "f", f)
+        out = {'results': (IoU, f), 'F1': f, 'progress_bar': logs}
+        return out
 
 class FcnResNet50(pl.LightningModule):
     def __init__(self, lr):
