@@ -50,9 +50,7 @@ if __name__ == '__main__':
 
     np.random.seed(2) # just in case global seed doesnt cover numpy
     idx =  np.random.permutation(np.arange(100))
-    """
-    (fold, epoch, batch/epoch) -> (fold, epoch) (only store median or mean)
-    """
+
     for key in seg_models.keys():
         print("training: ", key)
         fold = 0
@@ -65,7 +63,7 @@ if __name__ == '__main__':
             train_dataloader = DataLoader(train_dataset, batch_size=5, pin_memory=True, num_workers=8)
             test_dataloader = DataLoader(test_dataset, batch_size=5, pin_memory=True, num_workers=8)
             model = VisionBaseline(seg_models[key], model_opts[key], loss[key], optimizer[key], optimizer_options[key])
-            d = dict(model=key)
+            #d = dict(model=key)
             iou = np.zeros((cross_val, epochs))
             f1 = np.zeros((cross_val, epochs))
             if torch.cuda.is_available():
@@ -90,12 +88,10 @@ if __name__ == '__main__':
             gc.collect()
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            d = {**d, key+"_iou":iou, key+"_f1":f1}
-            np.save(key+"_iou", iou)
-            np.save(key+"_f1", f1)
+            #d = {**d, key+"_iou":iou, key+"_f1":f1}
+        np.save(key+"_iou", iou)
+        np.save(key+"_f1", f1)
 
-        #print('mean/std IoU:', np.array(val_IoU).mean(), np.array(val_IoU).std())
-        #print('mean/std F1:', np.array(val_F1).mean(), np.array(val_F1).std())
 
 
 
