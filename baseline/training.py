@@ -19,6 +19,8 @@ import pytorch_lightning
 from dataset import ArealDataset
 from baseline_models import *
 from torchvision.models.segmentation import fcn_resnet50, fcn_resnet101, deeplabv3_resnet50, deeplabv3_resnet101
+import argparse
+
 
 pl.seed_everything(2)
 
@@ -51,9 +53,16 @@ if __name__ == '__main__':
     np.random.seed(2) # just in case global seed doesnt cover numpy
     idx =  np.random.permutation(np.arange(100))
 
-    for key in seg_models.keys():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("key", help="model which should be trained", type=str)
+    key = vars(parser.parse_args())['key']
+
+    #for key in seg_models.keys():
+    def train(key):
         print("training: ", key)
         fold = 0
+        iou = np.zeros((cross_val, epochs))
+        f1 = np.zeros((cross_val, epochs))
         for train_indices_plain, test_indices_plain in kf.split(dataset):
             train_indices = [idx[i] for i in train_indices_plain]
             test_indices = [idx[i] for i in test_indices_plain]
@@ -63,17 +72,14 @@ if __name__ == '__main__':
             train_dataloader = DataLoader(train_dataset, batch_size=5, pin_memory=True, num_workers=8)
             test_dataloader = DataLoader(test_dataset, batch_size=5, pin_memory=True, num_workers=8)
             model = VisionBaseline(seg_models[key], model_opts[key], loss[key], optimizer[key], optimizer_options[key])
-            #d = dict(model=key)
-            iou = np.zeros((cross_val, epochs))
-            f1 = np.zeros((cross_val, epochs))
             if torch.cuda.is_available():
-                trainer = pl.Trainer(max_epochs=1, gpus=1, precision=16, stochastic_weight_avg=True, deterministic=True)
+                trainer = pl.Trainer(max_epochs=epochs, gpus=1, precision=16, stochastic_weight_avg=True, deterministic=True)
             else:
-                trainer = pl.Trainer(max_epochs=1, deterministic=True)
+                trainer = pl.Trainer(max_epochs=epochs, deterministic=True)
 
             for i in range(epochs):
                 trainer.fit(model, train_dataloader)
-                results = trainer.test(model, test_dataloader, verbose=False)[0]
+                trainer.test(model, test_dataloader, verbose=False)[0]
                 iou[fold, i] = np.array(model.testIoU).mean()
                 f1[fold, i] = np.array(model.testF1).mean()
                 print(key + ", epoch: ", i, ", fold: ", fold, ", iou: ", iou[fold, i], ", f1: ", f1[fold, i] )
@@ -88,9 +94,10 @@ if __name__ == '__main__':
             gc.collect()
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            #d = {**d, key+"_iou":iou, key+"_f1":f1}
         np.save(key+"_iou", iou)
         np.save(key+"_f1", f1)
+
+    train(key)
 
 
 
