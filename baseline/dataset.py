@@ -33,11 +33,12 @@ class ArealDataset(Dataset):
         #
         means = []
         stds =  []
+        d = 1 / 255
         if len(means) == 0:
             count = 0
             for imname in tqdm(impaths):
                 pil_im = np.array(Image.open(imname))
-                pil_im = pil_im / 255 # normalize betweeen 0 1
+                pil_im = pil_im * d# normalize betweeen 0 1
                 means.append([pil_im[:,:,c].mean() for c in range(3)])
                 stds.append([pil_im[:,:,c].std() for c in range(3)])
                 count += 1

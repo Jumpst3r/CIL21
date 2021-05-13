@@ -51,7 +51,7 @@ if __name__ == '__main__':
     val_IoU = []
     val_F1 = []
 
-    idx =  np.random.permutation(np.arange(100))
+    idx = np.random.permutation(np.arange(100))
 
     parser = argparse.ArgumentParser()
     parser.add_argument("key", help="model which should be trained", type=str)
