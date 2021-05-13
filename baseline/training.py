@@ -34,7 +34,7 @@ if __name__ == '__main__':
     cross_val = 4
     kf = KFold(n_splits=cross_val)
 
-    epochs = 200
+    epochs = 50
     base_model_options = dict(pretrained=False, progress=True, num_classes=1)
     base_adam_options = dict(lr=1e-4, weight_decay=1e-5)
     seg_models = {"fcn_resnet50": fcn_resnet50, "fcn_resnet101": fcn_resnet101,
@@ -64,7 +64,7 @@ if __name__ == '__main__':
         if torch.cuda.is_available():
             return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0, logger=False)
         else:
-            return pl.Trainer(max_epochs=epochs, gpus=1, deterministic=True, progress_bar_refresh_rate=0, logger=False) # precision=16, stochastic_weight_avg=True,
+            return pl.Trainer(max_epochs=epochs, gpus=1, deterministic=True, progress_bar_refresh_rate=0, logger=False, precision=16, stochastic_weight_avg=True) #
 
 
     #for key in seg_models.keys():
