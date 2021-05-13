@@ -49,8 +49,8 @@ class VisionBaseline(pl.LightningModule):
         self.IoU = IoU
         self.curr_epoch = 0
         self.curr_fold = 0
-        self.val_iou = np.zeros((epochs+1))
-        self.val_f1 = np.zeros((epochs+1))
+        self.val_iou = np.zeros((epochs+2))
+        self.val_f1 = np.zeros((epochs+2))
 
     def forward(self, x):
         out = self.model(x)
@@ -81,7 +81,7 @@ class VisionBaseline(pl.LightningModule):
         IoU = np.array(self.testIoU).mean()
         f = np.array(self.testF1).mean()
         logs = {'IoU': IoU, 'results': (IoU, f)}
-        print("len:", len(self.testIoU), "IoU", IoU, "f", f)
+        print("len:", len(self.testIoU), "curr_epoch: ", self.curr_epoch,"IoU", IoU, "f", f)
         self.testF1 = []
         self.testIoU = []
         self.val_f1[self.curr_epoch] = f

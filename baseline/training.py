@@ -34,7 +34,7 @@ if __name__ == '__main__':
     cross_val = 4
     kf = KFold(n_splits=cross_val)
 
-    epochs = 1
+    epochs = 20
     base_model_options = dict(pretrained=False, progress=True, num_classes=1)
     base_adam_options = dict(lr=1e-4, weight_decay=1e-5)
     seg_models = {"fcn_resnet50": fcn_resnet50, "fcn_resnet101": fcn_resnet101,
@@ -72,8 +72,8 @@ if __name__ == '__main__':
             train_dataset = torch.utils.data.dataset.Subset(dataset, train_indices)
             test_dataset = torch.utils.data.dataset.Subset(dataset, test_indices)
             test_dataset.applyTransforms = False
-            train_dataloader = DataLoader(train_dataset, batch_size=5, pin_memory=True, num_workers=8)
-            test_dataloader = DataLoader(test_dataset, batch_size=5, pin_memory=True, num_workers=8)
+            train_dataloader = DataLoader(train_dataset, batch_size=5, pin_memory=True, num_workers=2)
+            test_dataloader = DataLoader(test_dataset, batch_size=5, pin_memory=True, num_workers=2)
             model = VisionBaseline(seg_models[key], model_opts[key], loss[key], optimizer[key], optimizer_options[key], epochs)
             if torch.cuda.is_available():
                 trainer = pl.Trainer(max_epochs=epochs, gpus=1, precision=16, stochastic_weight_avg=True, deterministic=True, progress_bar_refresh_rate=0)
@@ -86,8 +86,8 @@ if __name__ == '__main__':
             print("fold: ", fold, " time: ", end-start, "s iou: ", model.val_iou, " f1: ", model.val_f1)
 
             #0th entry is sanity check, drop that
-            iou[fold, :] = model.val_iou[1:]
-            f1[fold, :] = model.val_f1[1:]
+            iou[fold, :] = model.val_iou[1:-1]
+            f1[fold, :] = model.val_f1[1:-1]
 
             """
             for i in range(epochs): 
