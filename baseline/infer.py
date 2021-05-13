@@ -43,7 +43,7 @@ def patch_to_label(patch):
 
 def mask_to_submission_strings(image_filename):
     """Reads a single image and outputs the strings that should go into the submission file"""
-    img_number = int(re.search(r"\d+", image_filename).group(0))
+    img_number = int(re.search(r"\d+.png", image_filename).group(0)[:-4]) #crop .png
     im = mpimg.imread(image_filename)
     patch_size = 16
     for j in range(0, im.shape[1], patch_size):
@@ -104,7 +104,7 @@ if __name__ == '__main__':
         print(means, stds)
 
         for image_path in tqdm(test_imgs):
-            print("processing img nr: ", cnt)
+            #print("processing img nr: ", cnt)
             cnt += 1
             im = np.array(Image.open(image_path))
             transform = A.Compose([
