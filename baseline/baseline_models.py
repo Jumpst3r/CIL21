@@ -82,6 +82,8 @@ class VisionBaseline(pl.LightningModule):
         f = np.array(self.testF1).mean()
         logs = {'IoU': IoU, 'results': (IoU, f)}
         print("len:", len(self.testIoU), "IoU", IoU, "f", f)
+        self.testF1 = []
+        self.testIoU = []
         self.val_f1[self.curr_epoch] = f
         self.val_iou[self.curr_epoch] = IoU
         self.curr_epoch += 1
