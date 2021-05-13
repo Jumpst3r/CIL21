@@ -90,7 +90,7 @@ if __name__ == '__main__':
         return means, stds
 
     def infer(key):
-        path = "/trained_models/" + key + "_trained.pt"
+        path = "./trained_models/" + key + "_trained.pt"
         model = VisionBaseline(seg_models[key], model_options, F.binary_cross_entropy_with_logits, optimizer, base_adam_options, 100)
         model.load_state_dict(torch.load(path))
         model.eval()
