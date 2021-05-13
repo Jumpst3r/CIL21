@@ -34,7 +34,7 @@ if __name__ == '__main__':
     cross_val = 4
     kf = KFold(n_splits=cross_val)
 
-    epochs = 50
+    epochs = 100
     base_model_options = dict(pretrained=False, progress=True, num_classes=1)
     base_adam_options = dict(lr=1e-4, weight_decay=1e-5)
     seg_models = {"fcn_resnet50": fcn_resnet50, "fcn_resnet101": fcn_resnet101,
