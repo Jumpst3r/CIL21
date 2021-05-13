@@ -38,8 +38,6 @@ import pytorch_lightning as pl
 from utils import IoU, DiceBCELoss, IoULoss, FocalLoss, F1
 
 class VisionBaseline(pl.LightningModule):
-    def __init__(self, model, model_opts):
-        self.model = model(**model_opts)
     def __init__(self, model, model_opts, loss, optimizer, opt_opts, epochs):
         super().__init__()
         self.model = model(**model_opts).train()

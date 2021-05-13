@@ -68,6 +68,9 @@ if __name__ == '__main__':
     seg_models = {"fcn_resnet50": fcn_resnet50, "fcn_resnet101": fcn_resnet101,
                   "deeplabv3_resnet50": deeplabv3_resnet50, "deeplabv3_resnet101": deeplabv3_resnet101}
     model_options = dict(pretrained=False, progress=True, num_classes=1)
+    optimizer = torch.optim.Adam
+    base_adam_options = dict(lr=1e-4, weight_decay=1e-5)
+
     test_imgs = sorted(glob.glob('test_images/*.png'))
 
     def getNorms():
@@ -87,8 +90,8 @@ if __name__ == '__main__':
         return means, stds
 
     def infer(key):
-        path = key + "_trained.pt"
-        model = VisionBaseline(seg_models[key], model_options)
+        path = "/trianed_models/" + key + "_trained.pt"
+        model = VisionBaseline(seg_models[key], model_options, F.binary_cross_entropy_with_logits, optimizer, base_adam_options, 100)
         model.load_state_dict(torch.load(path))
         model.eval()
 
