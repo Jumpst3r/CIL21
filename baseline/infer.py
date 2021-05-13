@@ -90,7 +90,7 @@ if __name__ == '__main__':
         return means, stds
 
     def infer(key):
-        path = "/trianed_models/" + key + "_trained.pt"
+        path = "/trained_models/" + key + "_trained.pt"
         model = VisionBaseline(seg_models[key], model_options, F.binary_cross_entropy_with_logits, optimizer, base_adam_options, 100)
         model.load_state_dict(torch.load(path))
         model.eval()
@@ -104,6 +104,7 @@ if __name__ == '__main__':
         print(means, stds)
 
         for image_path in tqdm(test_imgs):
+            print("processing img nr: ", cnt)
             cnt += 1
             im = np.array(Image.open(image_path))
             transform = A.Compose([
@@ -138,5 +139,6 @@ if __name__ == '__main__':
     image_filenames = glob.glob('out/*.png')
 
     masks_to_submission(submission_filename, *image_filenames)
+    print("done! File: ", submission_filename)
 
 
