@@ -34,7 +34,7 @@ if __name__ == '__main__':
     cross_val = 4
     kf = KFold(n_splits=cross_val)
 
-    epochs = 20
+    epochs = 200
     base_model_options = dict(pretrained=False, progress=True, num_classes=1)
     base_adam_options = dict(lr=1e-4, weight_decay=1e-5)
     seg_models = {"fcn_resnet50": fcn_resnet50, "fcn_resnet101": fcn_resnet101,
@@ -60,6 +60,13 @@ if __name__ == '__main__':
     key = vars(parser.parse_args())['key']
     mode = vars(parser.parse_args())['mode']
 
+    def get_trainer():
+        if torch.cuda.is_available():
+            return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0, logger=False)
+        else:
+            return pl.Trainer(max_epochs=epochs, gpus=1, deterministic=True, progress_bar_refresh_rate=0, logger=False) # precision=16, stochastic_weight_avg=True,
+
+
     #for key in seg_models.keys():
     def eval(key):
         print("training: ", key)
@@ -72,13 +79,10 @@ if __name__ == '__main__':
             train_dataset = torch.utils.data.dataset.Subset(dataset, train_indices)
             test_dataset = torch.utils.data.dataset.Subset(dataset, test_indices)
             test_dataset.applyTransforms = False
-            train_dataloader = DataLoader(train_dataset, batch_size=5, pin_memory=True, num_workers=2)
-            test_dataloader = DataLoader(test_dataset, batch_size=5, pin_memory=True, num_workers=2)
+            train_dataloader = DataLoader(train_dataset, batch_size=5, pin_memory=True, num_workers=8)
+            test_dataloader = DataLoader(test_dataset, batch_size=5, pin_memory=True, num_workers=8)
             model = VisionBaseline(seg_models[key], model_opts[key], loss[key], optimizer[key], optimizer_options[key], epochs)
-            if torch.cuda.is_available():
-                trainer = pl.Trainer(max_epochs=epochs, gpus=1, precision=16, stochastic_weight_avg=True, deterministic=True, progress_bar_refresh_rate=0)
-            else:
-                trainer = pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0)
+            trainer = get_trainer()
 
             start = time.time()
             trainer.fit(model, train_dataloader, test_dataloader)
@@ -89,13 +93,6 @@ if __name__ == '__main__':
             iou[fold, :] = model.val_iou[1:-1]
             f1[fold, :] = model.val_f1[1:-1]
 
-            """
-            for i in range(epochs): 
-                trainer.test(model, test_dataloader, verbose=False)[0]
-                iou[fold, i] = np.array(model.testIoU).mean()
-                f1[fold, i] = np.array(model.testF1).mean()
-                print(key + ", epoch: ", i, ", fold: ", fold, ", iou: ", iou[fold, i], ", f1: ", f1[fold, i] )
-            """
             fold += 1
             del model
             del trainer
@@ -115,11 +112,8 @@ if __name__ == '__main__':
         train_dataset = torch.utils.data.dataset.Subset(dataset, [i for i in range(100)])
         train_dataloader = DataLoader(train_dataset, batch_size=5, pin_memory=True, num_workers=8)
         model = VisionBaseline(seg_models[key], model_opts[key], loss[key], optimizer[key], optimizer_options[key], epochs)
-        if torch.cuda.is_available():
-            trainer = pl.Trainer(max_epochs=epochs, gpus=1, precision=16, stochastic_weight_avg=True,
-                                 deterministic=True, progress_bar_refresh_rate=0)
-        else:
-            trainer = pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0)
+        trainer = get_trainer()
+
         start = time.time()
         trainer.fit(model, train_dataloader)
         end = time.time()
