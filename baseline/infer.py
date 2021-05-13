@@ -131,12 +131,12 @@ if __name__ == '__main__':
             im = Image.fromarray(np.array(imout * 255, dtype=np.uint8)).resize((608, 608))
             im = im.resize((608, 608))
             fname = image_path[image_path.rfind('_') - 4:]
-            im.save('out/' + fname)
+            im.save('./out_'+key+'/' + fname)
 
     infer(key)
 
-    submission_filename = 'test_submission.csv'
-    image_filenames = glob.glob('out/*.png')
+    submission_filename = key + 'test_submission.csv'
+    image_filenames = glob.glob('./out_'+key+'/*.png')
 
     masks_to_submission(submission_filename, *image_filenames)
     print("done! File: ", submission_filename)
