@@ -51,7 +51,6 @@ if __name__ == '__main__':
     val_IoU = []
     val_F1 = []
 
-    np.random.seed(2) # just in case global seed doesnt cover numpy
     idx =  np.random.permutation(np.arange(100))
 
     parser = argparse.ArgumentParser()
@@ -62,10 +61,9 @@ if __name__ == '__main__':
 
     def get_trainer():
         if torch.cuda.is_available():
-            return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0, logger=False)
+            return pl.Trainer(max_epochs=epochs, gpus=1, deterministic=True, progress_bar_refresh_rate=0, logger=False)  #
         else:
-            return pl.Trainer(max_epochs=epochs, gpus=1, deterministic=True, progress_bar_refresh_rate=0, logger=False, precision=16, stochastic_weight_avg=True) #
-
+            return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0, logger=False)
 
     #for key in seg_models.keys():
     def eval(key):
