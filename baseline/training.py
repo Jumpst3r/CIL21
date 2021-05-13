@@ -20,6 +20,7 @@ from dataset import ArealDataset
 from baseline_models import *
 from torchvision.models.segmentation import fcn_resnet50, fcn_resnet101, deeplabv3_resnet50, deeplabv3_resnet101
 import argparse
+import time
 
 
 pl.seed_everything(2)
@@ -55,10 +56,12 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("key", help="model which should be trained", type=str)
+    parser.add_argument("mode", help="enter \"eval\" or \"train\" to eval with CV or train on whole set for kaggle sub", type=str)
     key = vars(parser.parse_args())['key']
+    mode = vars(parser.parse_args())['mode']
 
     #for key in seg_models.keys():
-    def train(key):
+    def eval(key):
         print("training: ", key)
         fold = 0
         iou = np.zeros((cross_val, epochs))
@@ -71,19 +74,28 @@ if __name__ == '__main__':
             test_dataset.applyTransforms = False
             train_dataloader = DataLoader(train_dataset, batch_size=5, pin_memory=True, num_workers=8)
             test_dataloader = DataLoader(test_dataset, batch_size=5, pin_memory=True, num_workers=8)
-            model = VisionBaseline(seg_models[key], model_opts[key], loss[key], optimizer[key], optimizer_options[key])
+            model = VisionBaseline(seg_models[key], model_opts[key], loss[key], optimizer[key], optimizer_options[key], epochs)
             if torch.cuda.is_available():
-                trainer = pl.Trainer(max_epochs=epochs, gpus=1, precision=16, stochastic_weight_avg=True, deterministic=True)
+                trainer = pl.Trainer(max_epochs=epochs, gpus=1, precision=16, stochastic_weight_avg=True, deterministic=True, progress_bar_refresh_rate=0)
             else:
-                trainer = pl.Trainer(max_epochs=epochs, deterministic=True)
+                trainer = pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0)
 
-            for i in range(epochs):
-                trainer.fit(model, train_dataloader)
+            start = time.time()
+            trainer.fit(model, train_dataloader, test_dataloader)
+            end = time.time()
+            print("fold: ", fold, " time: ", end-start, "s iou: ", model.val_iou, " f1: ", model.val_f1)
+
+            #0th entry is sanity check, drop that
+            iou[fold, :] = model.val_iou[1:]
+            f1[fold, :] = model.val_f1[1:]
+
+            """
+            for i in range(epochs): 
                 trainer.test(model, test_dataloader, verbose=False)[0]
                 iou[fold, i] = np.array(model.testIoU).mean()
                 f1[fold, i] = np.array(model.testF1).mean()
                 print(key + ", epoch: ", i, ", fold: ", fold, ", iou: ", iou[fold, i], ", f1: ", f1[fold, i] )
-
+            """
             fold += 1
             del model
             del trainer
@@ -94,11 +106,33 @@ if __name__ == '__main__':
             gc.collect()
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
+
         np.save(key+"_iou", iou)
         np.save(key+"_f1", f1)
 
-    train(key)
+    def train(key):
+        print("training for kaggle eval: ", key)
+        train_dataset = torch.utils.data.dataset.Subset(dataset, [i for i in range(100)])
+        train_dataloader = DataLoader(train_dataset, batch_size=5, pin_memory=True, num_workers=8)
+        model = VisionBaseline(seg_models[key], model_opts[key], loss[key], optimizer[key], optimizer_options[key], epochs)
+        if torch.cuda.is_available():
+            trainer = pl.Trainer(max_epochs=epochs, gpus=1, precision=16, stochastic_weight_avg=True,
+                                 deterministic=True, progress_bar_refresh_rate=0)
+        else:
+            trainer = pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0)
+        start = time.time()
+        trainer.fit(model, train_dataloader)
+        end = time.time()
+        print("time elapsed: ", end-start, "s epochs: ", epochs)
+        #dct = model.state_dict()
+        folder = '/cluster/scratch/fdokic/CIL21/'
+        PATH = folder+ key+"_trained.pt"
+        torch.save(model.state_dict(), PATH)
 
+    if mode == "eval":
+        eval(key)
+    if mode == "train":
+        train(key)
 
 
 

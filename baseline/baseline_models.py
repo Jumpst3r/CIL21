@@ -38,7 +38,7 @@ import pytorch_lightning as pl
 from utils import IoU, DiceBCELoss, IoULoss, FocalLoss, F1
 
 class VisionBaseline(pl.LightningModule):
-    def __init__(self, model, model_opts, loss, optimizer, opt_opts):
+    def __init__(self, model, model_opts, loss, optimizer, opt_opts, epochs):
         super().__init__()
         self.model = model(**model_opts).train()
         self.loss = loss
@@ -47,6 +47,10 @@ class VisionBaseline(pl.LightningModule):
         self.testIoU = []
         self.testF1 = []
         self.IoU = IoU
+        self.curr_epoch = 0
+        self.curr_fold = 0
+        self.val_iou = np.zeros((epochs+1))
+        self.val_f1 = np.zeros((epochs+1))
 
     def forward(self, x):
         out = self.model(x)
@@ -78,8 +82,17 @@ class VisionBaseline(pl.LightningModule):
         f = np.array(self.testF1).mean()
         logs = {'IoU': IoU, 'results': (IoU, f)}
         print("len:", len(self.testIoU), "IoU", IoU, "f", f)
+        self.val_f1[self.curr_epoch] = f
+        self.val_iou[self.curr_epoch] = IoU
+        self.curr_epoch += 1
         out = {'results': (IoU, f), 'F1': f, 'progress_bar': logs}
         return out
+
+    def validation_step(self, batch, batch_idx):
+        self.test_step(batch, batch_idx)
+
+    def validation_epoch_end(self, outputs):
+        self.test_epoch_end(outputs)
 
 class FcnResNet50(pl.LightningModule):
     def __init__(self, lr):
