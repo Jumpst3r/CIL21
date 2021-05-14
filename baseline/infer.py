@@ -93,7 +93,8 @@ if __name__ == '__main__':
         path = "./trained_models/" + key + "_trained.pt"
         model = VisionBaseline(seg_models[key], model_options, F.binary_cross_entropy_with_logits, optimizer,
                                base_adam_options, 100)
-        model.load_state_dict(torch.load(path)).eval()
+        model.load_state_dict(torch.load(path))
+        model.eval()
         return model
 
     def inferNativeRes(key):
@@ -115,7 +116,7 @@ if __name__ == '__main__':
 
         for image_path in tqdm(test_imgs):
             cnt += 1
-            im = np.array(Image.open(image_path))
+            im = Image.open(image_path)
 
             transform = A.Compose([
                 A.Resize(SIZE, SIZE),
@@ -123,15 +124,16 @@ if __name__ == '__main__':
                 ToTensorV2(transpose_mask=True)
             ])
 
-            tf = torch.tensor(np.zeros(4, 3, 128, 128))
+            tf = torch.empty(4, 3, 128, 128).float()
             for i, c in enumerate(crops):
-                im_c = im.crop(c)
+                im_c = np.array(im.crop(c))
                 im_c = transform(image=im_c)
-                im_c = im_c['image'] #.unsqueeze(0)
+                im_c = im_c['image'].unsqueeze(0)
                 tf[i, :, :, :] = im_c
-
+                
             y = model(tf)
-            print(y.shape, tf.shape)
+            out = np.array(F.sigmoid(y[0]).detach().cpu().numpy(), dtype=np.float32)
+            print(out.shape, y.shape)
 
 
     def infer(key):
