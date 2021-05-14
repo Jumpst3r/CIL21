@@ -89,11 +89,53 @@ if __name__ == '__main__':
             stds = list(np.array(stds).sum(axis=0) / count)
         return means, stds
 
-    def infer(key):
+    def getModel(key):
         path = "./trained_models/" + key + "_trained.pt"
-        model = VisionBaseline(seg_models[key], model_options, F.binary_cross_entropy_with_logits, optimizer, base_adam_options, 100)
-        model.load_state_dict(torch.load(path))
-        model.eval()
+        model = VisionBaseline(seg_models[key], model_options, F.binary_cross_entropy_with_logits, optimizer,
+                               base_adam_options, 100)
+        model.load_state_dict(torch.load(path)).eval()
+        return model
+
+    def inferNativeRes(key):
+        model = getModel(key)
+
+        test_imgs = sorted(glob.glob('test_images/*.png'))
+        cnt = 0
+        # The input size on which your model was trained
+        SIZE = 128
+
+        means, stds = getNorms()
+        print(means, stds)
+
+        c0 = (0, 0, 400, 400)
+        c1 = (208, 0, 608, 400)
+        c2 = (0, 208, 400, 608)
+        c3 = (208, 208, 608, 608)
+        crops = [c0, c1, c2, c3]
+
+        for image_path in tqdm(test_imgs):
+            cnt += 1
+            im = np.array(Image.open(image_path))
+
+            transform = A.Compose([
+                A.Resize(SIZE, SIZE),
+                A.Normalize(mean=means, std=stds),
+                ToTensorV2(transpose_mask=True)
+            ])
+
+            tf = torch.tensor(np.zeros(4, 3, 128, 128))
+            for i, c in enumerate(crops):
+                im_c = im.crop(c)
+                im_c = transform(image=im_c)
+                im_c = im_c['image'] #.unsqueeze(0)
+                tf[i, :, :, :] = im_c
+
+            y = model(tf)
+            print(y.shape, tf.shape)
+
+
+    def infer(key):
+        model = getModel(key)
 
         test_imgs = sorted(glob.glob('test_images/*.png'))
         cnt = 0
