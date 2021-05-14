@@ -146,10 +146,10 @@ if __name__ == '__main__':
             y = np.array(y.detach().cpu().numpy(), dtype=np.float32)
 
             comb = np.zeros((new_size, new_size))
-            comb[:ref, :ref] += y[0, :, :, :]
-            comb[:ref, diff:] += y[1, :, :, :]
-            comb[diff:, :ref] += y[2, :, :, :]
-            comb[diff:, diff:] += y[3, :, :, :]
+            comb[:ref, :ref] += y[0, 0, :, :]
+            comb[:ref, diff:] += y[1, 0, :, :]
+            comb[diff:, :ref] += y[2, 0, :, :]
+            comb[diff:, diff:] += y[3, 0, :, :]
 
             comb *= mean_mat
 
