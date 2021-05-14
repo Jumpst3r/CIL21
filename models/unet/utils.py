@@ -5,14 +5,24 @@ import numpy as np
 from torch.autograd import Function
 from torch.autograd import Variable
 
+
 def F1(inputs, targets):
 
-        inputs = torch.round(F.sigmoid(inputs))
-        TP = (inputs * targets).sum()    
-        FP = ((1-targets) * inputs).sum()
-        FN = (targets * (1-inputs)).sum()
+    inputs = torch.round(F.sigmoid(inputs))
+    TP = (inputs * targets).sum()
+    FP = ((1-targets) * inputs).sum()
+    FN = (targets * (1-inputs)).sum()
 
-        return TP / (TP + 0.5 * (FP + FN))
+    return TP / (TP + 0.5 * (FP + FN))
+
+
+def accuracy(inputs, targets):
+
+    inputs = torch.round(F.sigmoid(inputs))
+    T = (inputs == targets).sum()
+
+    return T / targets.numel()
+
 
 def IoU( y_pred:torch.Tensor, y_true:torch.Tensor) -> torch.Tensor:
     # import pdb; pdb.set_trace()
@@ -132,3 +142,25 @@ class FocalTverskyLoss(nn.Module):
         FocalTversky = (1 - Tversky)**gamma
                        
         return FocalTversky
+
+
+class TverskyLoss(nn.Module):
+    def __init__(self, weight=None, size_average=True):
+        super(TverskyLoss, self).__init__()
+
+    def forward(self, inputs, targets, smooth=1, alpha=0.7, beta=0.3):
+        # comment out if your model contains a sigmoid or equivalent activation layer
+        inputs = F.sigmoid(inputs)
+
+        # flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        # True Positives, False Positives & False Negatives
+        TP = (inputs * targets).sum()
+        FP = ((1 - targets) * inputs).sum()
+        FN = (targets * (1 - inputs)).sum()
+
+        Tversky = (TP + smooth) / (TP + alpha * FP + beta * FN + smooth)
+
+        return 1 - Tversky

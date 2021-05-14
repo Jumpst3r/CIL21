@@ -5,6 +5,21 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 
 
+class DilationBlock(pl.LightningModule):
+    """(convolution => [BN] => ReLU) * 2"""
+
+    def __init__(self, in_channels, out_channels, dilation, padding):
+        super().__init__()
+        self.dil_conv = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=padding, dilation=dilation),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, x):
+        return self.dil_conv(x)
+
+
 class DoubleConv(pl.LightningModule):
     """(convolution => [BN] => ReLU) * 2"""
 
