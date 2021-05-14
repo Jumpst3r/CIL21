@@ -211,7 +211,7 @@ if __name__ == '__main__':
     if mode == "native":
         inferNativeRes(key)
         submission_filename = key + '_native_test_submission.csv'
-        image_filenames = glob.glob('./out_' + key + '_native/*.png')
+        image_filenames = glob.glob('./out_' + key + '_native_thresh/*.png')
     if mode == "crop":
         infer(key)
         submission_filename = key + 'test_submission.csv'
