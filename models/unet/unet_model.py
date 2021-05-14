@@ -3,7 +3,8 @@
 
 import torch.nn.functional as F
 import pytorch_lightning as pl
-from .utils import IoU, DiceBCELoss, IoULoss, FocalLoss, F1
+from .utils import IoU, DiceBCELoss, IoULoss, FocalLoss, F1, FocalTverskyLoss, BinaryDiceLoss
+from .cldice import soft_cldice
 from torchgeometry.losses.dice import DiceLoss
 import numpy as np
 from .unet_parts import *
@@ -21,7 +22,7 @@ class StackedUNet(pl.LightningModule):
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=1e-5)
         self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, gamma=0.5, step_size=100)
         self.alpha = 0.1
-        self.loss = F.binary_cross_entropy_with_logits
+        self.loss = BinaryDiceLoss()
         self.IoU = IoU
         self.testIoUs = []
         self.testF1s = []

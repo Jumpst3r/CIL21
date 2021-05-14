@@ -25,7 +25,7 @@ pl.seed_everything(2)
 from sklearn.model_selection import KFold
 import gc
 
-MAX_EPOCHS = 200
+MAX_EPOCHS = 100
 BATCH_SIZE = 10
 
 if __name__ == '__main__':
@@ -38,14 +38,15 @@ if __name__ == '__main__':
         train_dataset = torch.utils.data.dataset.Subset(dataset,train_indices)
         test_dataset =   torch.utils.data.dataset.Subset(dataset,test_indices)
         test_dataset.applyTransforms = False
-        train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, pin_memory=False, num_workers=8)
-        test_dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, pin_memory=False, num_workers=8)
-        model = StackedUNet(lr=1e-3, nb_blocks=5)
-        trainer = pl.Trainer(max_epochs=MAX_EPOCHS, gpus=1, stochastic_weight_avg=True, precision=16, deterministic=True)
+        train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, pin_memory=False, num_workers=1)
+        test_dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, pin_memory=False, num_workers=1)
+        model = StackedUNet(lr=1e-3, nb_blocks=1)
+        trainer = pl.Trainer(max_epochs=MAX_EPOCHS, gpus=1, stochastic_weight_avg=True, precision=32, deterministic=True)
         trainer.fit(model,train_dataloader)
         results = trainer.test(model, test_dataloader, verbose=False)[0]
         val_IoU.append(results['results'][0])
         val_F1.append(results['results'][1])
+        break
         del model
         del trainer
         del train_dataset
@@ -54,12 +55,14 @@ if __name__ == '__main__':
         del test_dataloader
         gc.collect()
         torch.cuda.empty_cache()
+        
+        
     
-
+    print(val_F1)
     print('mean/std IoU:',np.array(val_IoU).mean(), np.array(val_IoU).std())
     print('mean/std F1:',np.array(val_F1).mean(), np.array(val_F1).std())
        
-    
+    exit()
 
     # train on full dataset to get kaggle score:
     checkpoint_callback = ModelCheckpoint(
