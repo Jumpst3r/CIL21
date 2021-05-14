@@ -154,7 +154,6 @@ if __name__ == '__main__':
             comb *= mean_mat
 
             out = np.array(F.sigmoid(torch.tensor(comb)).detach().cpu().numpy(), dtype=np.float32)
-            print(out.shape, y.shape)
             out = np.array(out > 0.5, dtype=np.float32)
 
             im = Image.fromarray(np.array(out * 255, dtype=np.uint8)).resize((608, 608))
