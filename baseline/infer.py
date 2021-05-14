@@ -26,6 +26,7 @@ from baseline_models import VisionBaseline
 from torchvision.models.segmentation import fcn_resnet50, fcn_resnet101, deeplabv3_resnet50, deeplabv3_resnet101
 import argparse
 import time
+import cv2 as cv
 
 
 import glob
@@ -156,10 +157,11 @@ if __name__ == '__main__':
             comb *= mean_mat
 
             out = np.array(F.sigmoid(torch.tensor(comb)).detach().cpu().numpy(), dtype=np.float32)
-            out = np.array(out > 0.5, dtype=np.float32)
+            out = cv.adaptiveThreshold(out, 1, cv.ADAPTIVE_THRESH_GAUSSIAN_C, \
+                             cv.THRESH_BINARY, 11, 0)
 
             im = Image.fromarray(np.array(out * 255, dtype=np.uint8)).resize((608, 608))
-            im = im.resize((608, 608))
+            #im = im.resize((608, 608))
             fname = image_path[image_path.rfind('_') - 4:]
             im.save('./out_'+key+'_native/' + fname)
 
