@@ -63,7 +63,9 @@ def masks_to_submission(submission_filename, *image_filenames):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("key", help="model which should be trained", type=str)
+    parser.add_argument("mode", help="native or cropped inference style", type=str)
     key = vars(parser.parse_args())['key']
+    mode = vars(parser.parse_args())['mode']
 
     seg_models = {"fcn_resnet50": fcn_resnet50, "fcn_resnet101": fcn_resnet101,
                   "deeplabv3_resnet50": deeplabv3_resnet50, "deeplabv3_resnet101": deeplabv3_resnet101}
@@ -203,14 +205,16 @@ if __name__ == '__main__':
             fname = image_path[image_path.rfind('_') - 4:]
             im.save('./out_'+key+'/' + fname)
 
-    inferNativeRes(key)
-    """
-    infer(key)
-
-    submission_filename = key + 'test_submission.csv'
-    image_filenames = glob.glob('./out_'+key+'/*.png')
+    if mode == "native":
+        inferNativeRes(key)
+        submission_filename = key + '_native_test_submission.csv'
+        image_filenames = glob.glob('./out_' + key + '_native/*.png')
+    else:
+        infer(key)
+        submission_filename = key + 'test_submission.csv'
+        image_filenames = glob.glob('./out_' + key + '/*.png')
 
     masks_to_submission(submission_filename, *image_filenames)
     print("done! File: ", submission_filename)
-    """
+
 
