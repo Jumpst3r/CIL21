@@ -114,6 +114,17 @@ if __name__ == '__main__':
         c3 = (208, 208, 608, 608)
         crops = [c0, c1, c2, c3]
 
+        new_size = 194
+        ref = 128
+        diff = new_size - ref
+        # define matrix used to calculate mean of re-combined samples
+        mean_mat = np.ones((new_size, new_size))
+        mean_mat[diff:ref, diff:ref] = 0.25
+        mean_mat[:diff, diff:ref] = 0.5
+        mean_mat[ref:, diff:ref] = 0.5
+        mean_mat[diff:ref, :diff] = 0.5
+        mean_mat[diff:ref, ref:] = 0.5
+
         for image_path in tqdm(test_imgs):
             cnt += 1
             im = Image.open(image_path)
@@ -131,9 +142,24 @@ if __name__ == '__main__':
                 im_c = im_c['image'].unsqueeze(0)
                 tf[i, :, :, :] = im_c
                 
-            y = model(tf)
-            out = np.array(F.sigmoid(y[0]).detach().cpu().numpy(), dtype=np.float32)
+            y = model(tf) #shape: (4, 1, 128, 128)
+            y = np.array(y.detach().cpu().numpy(), dtype=np.float32)
+
+            comb = np.zeros((new_size, new_size))
+            comb[:ref, :ref] += y[0, :, :, :]
+            comb[:ref, diff:] += y[1, :, :, :]
+            comb[diff:, :ref] += y[2, :, :, :]
+            comb[diff:, diff:] += y[3, :, :, :]
+
+            comb *= mean_mat
+
+            out = np.array(F.sigmoid(torch.tensor(comb)).detach().cpu().numpy(), dtype=np.float32)
             print(out.shape, y.shape)
+
+            im = Image.fromarray(np.array(out * 255, dtype=np.uint8)).resize((608, 608))
+            im = im.resize((608, 608))
+            fname = image_path[image_path.rfind('_') - 4:]
+            im.save('./out_'+key+'_native/' + fname)
 
 
     def infer(key):
