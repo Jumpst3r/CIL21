@@ -158,10 +158,10 @@ if __name__ == '__main__':
             out = np.array(F.sigmoid(torch.tensor(comb)).detach().cpu().numpy(), dtype=np.float32)
             #out = np.array(out > 0.5, dtype=np.float32)
 
-            out = Image.fromarray(np.array(out * 255, dtype=np.uint8))
+            out = np.array(out * 255, dtype=np.uint8)
 
             out = cv.adaptiveThreshold(out, 1, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 0)
-            im = cv.resize(out, (608, 608))
+            im = Image.fromarray(out).resize((608, 608))
             #im = im.resize((608, 608))
             fname = image_path[image_path.rfind('_') - 4:]
             im.save('./out_'+key+'_native/' + fname)
