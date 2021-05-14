@@ -164,7 +164,7 @@ if __name__ == '__main__':
             im = Image.fromarray(out).resize((608, 608))
             #im = im.resize((608, 608))
             fname = image_path[image_path.rfind('_') - 4:]
-            im.save('./out_'+key+'_native/' + fname)
+            im.save('./out_'+key+'_native_thresh/' + fname)
 
 
     def infer(key):
