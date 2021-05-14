@@ -175,6 +175,8 @@ if __name__ == '__main__':
             fname = image_path[image_path.rfind('_') - 4:]
             im.save('./out_'+key+'/' + fname)
 
+    inferNativeRes(key)
+    """
     infer(key)
 
     submission_filename = key + 'test_submission.csv'
@@ -182,5 +184,5 @@ if __name__ == '__main__':
 
     masks_to_submission(submission_filename, *image_filenames)
     print("done! File: ", submission_filename)
-
+    """
 
