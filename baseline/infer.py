@@ -156,9 +156,9 @@ if __name__ == '__main__':
             comb *= mean_mat
 
             out = np.array(F.sigmoid(torch.tensor(comb)).detach().cpu().numpy(), dtype=np.float32)
-            out = np.array(out > 0.5, dtype=np.float32)
-            #cv.adaptiveThreshold(out, 1, cv.ADAPTIVE_THRESH_GAUSSIAN_C, \
-                            # cv.THRESH_BINARY, 11, 0)
+            #out = np.array(out > 0.5, dtype=np.float32)
+            out = cv.adaptiveThreshold(out, 1, cv.ADAPTIVE_THRESH_GAUSSIAN_C, \
+                            cv.THRESH_BINARY, 11, 0)
                 #
 
             im = Image.fromarray(np.array(out * 255, dtype=np.uint8)).resize((608, 608))
