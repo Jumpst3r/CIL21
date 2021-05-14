@@ -106,7 +106,9 @@ if __name__ == '__main__':
         test_imgs = sorted(glob.glob('test_images/*.png'))
         cnt = 0
         # The input size on which your model was trained
-        SIZE = 128
+        new_size = 389 #194
+        ref = 256 #128
+        diff = new_size - ref
 
         means, stds = getNorms()
         print(means, stds)
@@ -117,9 +119,6 @@ if __name__ == '__main__':
         c3 = (208, 208, 608, 608)
         crops = [c0, c1, c2, c3]
 
-        new_size = 194
-        ref = 128
-        diff = new_size - ref
         # define matrix used to calculate mean of re-combined samples
         mean_mat = np.ones((new_size, new_size))
         mean_mat[diff:ref, diff:ref] = 0.25
@@ -133,12 +132,12 @@ if __name__ == '__main__':
             im = Image.open(image_path)
 
             transform = A.Compose([
-                A.Resize(SIZE, SIZE),
+                A.Resize(ref, ref),
                 A.Normalize(mean=means, std=stds),
                 ToTensorV2(transpose_mask=True)
             ])
 
-            tf = torch.empty(4, 3, 128, 128).float()
+            tf = torch.empty(4, 3, ref, ref).float()
             for i, c in enumerate(crops):
                 im_c = np.array(im.crop(c))
                 im_c = transform(image=im_c)
@@ -157,8 +156,10 @@ if __name__ == '__main__':
             comb *= mean_mat
 
             out = np.array(F.sigmoid(torch.tensor(comb)).detach().cpu().numpy(), dtype=np.float32)
-            out = cv.adaptiveThreshold(out, 1, cv.ADAPTIVE_THRESH_GAUSSIAN_C, \
-                             cv.THRESH_BINARY, 11, 0)
+            out = np.array(out > 0.5, dtype=np.float32)
+            #cv.adaptiveThreshold(out, 1, cv.ADAPTIVE_THRESH_GAUSSIAN_C, \
+                            # cv.THRESH_BINARY, 11, 0)
+                #
 
             im = Image.fromarray(np.array(out * 255, dtype=np.uint8)).resize((608, 608))
             #im = im.resize((608, 608))
