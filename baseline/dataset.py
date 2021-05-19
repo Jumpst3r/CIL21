@@ -32,7 +32,7 @@ class ArealDataset(Dataset):
         # Get dataset mean and stds:
         #
         means = []
-        stds =  []
+        stds = []
         d = 1 / 255
         if len(means) == 0:
             count = 0
@@ -87,3 +87,7 @@ class ArealDataset(Dataset):
         # use with cat. cross-entropy
         gt = tf['mask'].unsqueeze(0)
         return im.type(torch.float32), gt.type(torch.float32)
+
+class ArealDatasetIdx(ArealDataset):
+    def __getitem__(self, idx):
+        return super().__getitem__(idx), idx

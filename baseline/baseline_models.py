@@ -37,6 +37,20 @@ from torch.utils.data import DataLoader, random_split
 import pytorch_lightning as pl
 from utils import IoU, DiceBCELoss, IoULoss, FocalLoss, F1
 
+base_model_options = dict(pretrained=False, progress=True, num_classes=1)
+base_adam_options = dict(lr=1e-4, weight_decay=1e-5)
+seg_models = {"fcn_resnet50": fcn_resnet50, "fcn_resnet101": fcn_resnet101,
+              "deeplabv3_resnet50": deeplabv3_resnet50, "deeplabv3_resnet101": deeplabv3_resnet101}
+model_opts = {"fcn_resnet50": base_model_options, "fcn_resnet101": base_model_options,
+              "deeplabv3_resnet50": base_model_options, "deeplabv3_resnet101": base_model_options}
+loss = {"fcn_resnet50": F.binary_cross_entropy_with_logits, "fcn_resnet101": F.binary_cross_entropy_with_logits,
+        "deeplabv3_resnet50": F.binary_cross_entropy_with_logits,
+        "deeplabv3_resnet101": F.binary_cross_entropy_with_logits}
+optimizer = {"fcn_resnet50": torch.optim.Adam, "fcn_resnet101": torch.optim.Adam,
+             "deeplabv3_resnet50": torch.optim.Adam, "deeplabv3_resnet101": torch.optim.Adam}
+optimizer_options = {"fcn_resnet50": base_adam_options, "fcn_resnet101": base_adam_options,
+                     "deeplabv3_resnet50": base_adam_options, "deeplabv3_resnet101": base_adam_options}
+
 class VisionBaseline(pl.LightningModule):
     def __init__(self, model, model_opts, loss, optimizer, opt_opts, epochs):
         super().__init__()
@@ -95,4 +109,12 @@ class VisionBaseline(pl.LightningModule):
 
     def validation_epoch_end(self, outputs):
         self.test_epoch_end(outputs)
+
+class VisionBaselineSet(VisionBaseline):
+    def __init__(self, model, model_opts, loss, optimizer, opt_opts, epochs, train_idx, test_idx, train_res, augment):
+        super().__init__(model, model_opts, loss, optimizer, opt_opts, epochs)
+        self.train_idx = train_idx
+        self.test_idx = test_idx
+        self.train_res = train_res
+        self.augment = augment
 

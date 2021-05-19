@@ -35,18 +35,6 @@ if __name__ == '__main__':
     kf = KFold(n_splits=cross_val)
 
     epochs = 100
-    base_model_options = dict(pretrained=False, progress=True, num_classes=1)
-    base_adam_options = dict(lr=1e-4, weight_decay=1e-5)
-    seg_models = {"fcn_resnet50": fcn_resnet50, "fcn_resnet101": fcn_resnet101,
-                  "deeplabv3_resnet50": deeplabv3_resnet50, "deeplabv3_resnet101": deeplabv3_resnet101}
-    model_opts = {"fcn_resnet50": base_model_options, "fcn_resnet101": base_model_options,
-                  "deeplabv3_resnet50": base_model_options, "deeplabv3_resnet101": base_model_options}
-    loss = {"fcn_resnet50": F.binary_cross_entropy_with_logits, "fcn_resnet101": F.binary_cross_entropy_with_logits,
-                  "deeplabv3_resnet50": F.binary_cross_entropy_with_logits, "deeplabv3_resnet101": F.binary_cross_entropy_with_logits}
-    optimizer = {"fcn_resnet50": torch.optim.Adam, "fcn_resnet101": torch.optim.Adam,
-                  "deeplabv3_resnet50": torch.optim.Adam, "deeplabv3_resnet101": torch.optim.Adam}
-    optimizer_options = {"fcn_resnet50": base_adam_options, "fcn_resnet101": base_adam_options,
-                  "deeplabv3_resnet50": base_adam_options, "deeplabv3_resnet101": base_adam_options}
 
     val_IoU = []
     val_F1 = []
