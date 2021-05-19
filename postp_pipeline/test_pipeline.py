@@ -119,7 +119,7 @@ options = {'opt_train': opt_train, 'opt_test': opt_test}
 orig_res = 400
 
 base_dir = '/cluster/scratch/fdokic/CIL21'
-model_dir = base_dir + '/pp_test'
+model_dir = base_dir + '/pp_models'
 model_suffix = "_cv_trained.pt"
 
 root_dir_gt = '../baseline/training/groundtruth/'
