@@ -12,7 +12,7 @@ from PIL import Image, ImageOps
 from pytorch_lightning.callbacks import ModelCheckpoint
 from models.unet import UNet, StackedUNet
 import matplotlib.pyplot as plt
-from post import crf
+# from post import crf
 from tqdm import tqdm
 from torchvision import transforms
 import albumentations as A
@@ -21,7 +21,7 @@ from dataset_exploration import getnormvals
 
 with torch.no_grad():
 
-    model = StackedUNet.load_from_checkpoint('backbone-8/epoch=150-step=3000.ckpt').eval().cuda()
+    model = StackedUNet.load_from_checkpoint('cb4256/epoch=150-step=3000.ckpt').eval().cuda()
 
     # Iterate through a bunch of pictures in the test set
 
@@ -32,7 +32,7 @@ with torch.no_grad():
     cnt = 0
 
     # The input size on which your model was trained
-    SIZE = 192
+    SIZE = 384
 
     means, stds = getnormvals()
 
