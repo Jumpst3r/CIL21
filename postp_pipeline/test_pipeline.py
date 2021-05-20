@@ -59,7 +59,7 @@ def full_img_nr(idx):
     return str(idx)
 
 
-def infer_basic(dataset, model, opts):
+def infer_basic(dataset, model):
     basic_dir = '/infer_basic'
     i = 0
     for batch, idx in dataset:
