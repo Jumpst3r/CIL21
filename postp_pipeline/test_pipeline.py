@@ -159,11 +159,20 @@ def adaptive(dataset, lbl_path):
     thresh = 0.5
     for batch, idx in dataset:
         i += 1
-        _, lbl = batch
+        img, lbl = batch
         pred_path = lbl_path + '/satImage_' + full_img_nr(idx+1) + '.png'
         pred = np.array(Image.open(pred_path))
-
-        out = cv.adaptiveThreshold(out, 1, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 0)
+        #pred = np.array(pred > 127, dtype=np.uint8)
+        
+        out = cv.GaussianBlur(pred, (9,9), 0)
+        _, out = cv.threshold(out, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        #out = cv.adaptiveThreshold(pred, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0)
+        #out = cv.adaptiveThreshold(out, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0)
+        #out = cv.adaptiveThreshold(out, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0) 
+        #out = cv.adaptiveThreshold(out, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0) 
+        #out = cv.adaptiveThreshold(out, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0) 
+        out = out / 255
+        
         y = torch.tensor(out).unsqueeze(0)
 
         f1, iou = evaluate(y, lbl)
@@ -171,7 +180,7 @@ def adaptive(dataset, lbl_path):
         f1_ls.append(f1)
         print(i, iou, f1, idx + 1)
 
-        im = Image.fromarray(np.array(out, dtype=np.uint8)) #.resize((orig_res, orig_res))
+        im = Image.fromarray(np.array(out*255, dtype=np.uint8)) #.resize((orig_res, orig_res))
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
         dir = '.' + basic_dir
         im.save(dir+fname)
