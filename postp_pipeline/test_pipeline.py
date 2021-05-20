@@ -151,7 +151,7 @@ def thresh(dataset, lbl_path):
     print("thresh: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
 
 def adaptive(dataset, lbl_path):
-    # best: same as infer_basic!, with thresh = 0.5
+    # best: adaptive: iou:  0.7309903 f1:  0.8259104964763566
     i = 0
     iou_ls = []
     f1_ls = []
