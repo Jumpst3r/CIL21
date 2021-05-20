@@ -10,8 +10,9 @@ import numpy as np
 import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 
+
 class ArealDataset(Dataset):
-    '''
+    """
     Dataset class with inbuild transformations based on the Dihedral group D4,
     according to: https://arxiv.org/pdf/1809.06839.pdf (p2 section B) these
     transformations work best.
@@ -22,24 +23,25 @@ class ArealDataset(Dataset):
     root_dir_gt: Root directory for binary masks (type png), must end with tailing /: String
     target_size: Resize target, default is (608,608): tuple
     visualize: Plot the images generated
-    '''
-    def __init__(self, root_dir_images: str, root_dir_gt: str, target_size=(100,100), visualize=False, applyTransforms=True):
+    """
+
+    def __init__(self, root_dir_images: str, root_dir_gt: str, target_size=(100, 100), visualize=False,
+                 applyTransforms=True):
         impaths = sorted(glob.glob(root_dir_images + '*.png'))
         gtpaths = sorted(glob.glob(root_dir_gt + '*.png'))
         self.images = impaths
         self.gt = gtpaths
         self.visualize = visualize
         # Get dataset mean and stds:
-        # 
-        means = [] 
-        stds =  [] 
+        means = []
+        stds = []
         if len(means) == 0:
             count = 0
             for imname in tqdm(impaths):
                 pil_im = np.array(Image.open(imname))
-                pil_im = pil_im / 255 # normalize betweeen 0 1
-                means.append([pil_im[:,:,c].mean() for c in range(3)])
-                stds.append([pil_im[:,:,c].std() for c in range(3)])
+                pil_im = pil_im / 255  # normalize betweeen 0 1
+                means.append([pil_im[:, :, c].mean() for c in range(3)])
+                stds.append([pil_im[:, :, c].std() for c in range(3)])
                 count += 1
             means = list(np.array(means).sum(axis=0) / count)
             stds = list(np.array(stds).sum(axis=0) / count)
@@ -61,6 +63,7 @@ class ArealDataset(Dataset):
                 A.Normalize(mean=means, std=stds),
                 ToTensorV2(transpose_mask=True)
             ])
+
     def __len__(self):
         return len(self.images)
 
@@ -77,12 +80,12 @@ class ArealDataset(Dataset):
         im = tf['image']
         gt = tf['mask']
         if self.visualize:
-                f, (ax1, ax2) = plt.subplots(1, 2)
-                ax1.axis('off')
-                ax2.axis('off')
-                ax1.imshow(np.moveaxis(np.array(im),0,-1))
-                ax2.imshow(gt, cmap='binary_r')
-                plt.show()
+            f, (ax1, ax2) = plt.subplots(1, 2)
+            ax1.axis('off')
+            ax2.axis('off')
+            ax1.imshow(np.moveaxis(np.array(im), 0, -1))
+            ax2.imshow(gt, cmap='binary_r')
+            plt.show()
         # use with cat. cross-entropy
         gt = tf['mask'].unsqueeze(0)
-        return im.type(torch.float32), gt.type(torch.float32)  
+        return im.type(torch.float32), gt.type(torch.float32)
