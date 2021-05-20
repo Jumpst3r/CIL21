@@ -138,7 +138,7 @@ test_indices = [idx[i] for i in range(0, 25)]
 train_indices = [idx[i] for i in range(25, 100)]
 
 opt_train = {'target_res': 256, 'batch_size': 5, 'epochs': 50, 'augment': True, 'train_idx': train_indices, 'test_idx': test_indices}
-opt_test = {**opt_train, 'infer': (infer_basic, {})}
+opt_test = {**opt_train, 'infer': infer_basic, 'pp': crf }
 options = {'opt_train': opt_train, 'opt_test': opt_test}
 
 orig_res = 400
