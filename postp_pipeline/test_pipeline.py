@@ -15,7 +15,7 @@ import torchvision
 from torch.utils.data import DataLoader, random_split, Dataset
 import torch.nn.functional as F
 from PIL import Image
-#import crf
+from crf import dense_crf
 
 
 def get_trainer(epochs):
@@ -63,6 +63,7 @@ def infer_basic(dataset, model, opts):
     basic_dir = '/infer_basic'
     iou_ls = []
     f1_ls = []
+    i = 0
     for batch, idx in dataset:
         img, lbl = batch
         img = img.unsqueeze(0)
@@ -72,25 +73,30 @@ def infer_basic(dataset, model, opts):
         imout = imout.squeeze(0)
 
         #add postprocess here
-        #out = dense_crf(img.squeeze(0).detach().cpu().numpy(), imout)
-        #y = torch.tensor(out).unsqueeze(0)
+
+        bilat = np.array(img.squeeze(0).detach().cpu().numpy()*255, dtype=np.uint8)
+        bilat = np.reshape(bilat, (256, 256, 3))
+        
+        out = dense_crf(bilat, imout)
+        y = torch.tensor(out).unsqueeze(0)
 
         f1, iou = evaluate(y, lbl)
         iou_ls.append(iou)
         f1_ls.append(f1)
-        print(iou, f1)
+        print(i, iou, f1, idx+1)
 
-        im = Image.fromarray(np.array(imout * 255, dtype=np.uint8)).resize((orig_res, orig_res))
+        im = Image.fromarray(np.array(y.squeeze(0) * 255, dtype=np.uint8)) #.resize((orig_res, orig_res))
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
         dir = base_dir + basic_dir + fname
         #im.save(dir)
-        im.save('./' + basic_dir + fname)
+        im.save('.' + basic_dir + fname)
+        i += 1
     print("iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
     return dir
 
 
 def test(key, opts):
-    path = model_dir + key + model_suffix
+    path = model_dir + '/' + key + model_suffix
     #path = './deeplabv3_resnet101_trained.pt'
     model = VisionBaseline(seg_models[key], base_model_options, F.binary_cross_entropy_with_logits, optimizer[key],
                            base_adam_options, opts['epochs'])
