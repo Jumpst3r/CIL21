@@ -190,9 +190,9 @@ def test(key, opts):
                            target_size=(opts['target_res'], opts['target_res']))
     test_dataset = torch.utils.data.dataset.Subset(dataset, opts['test_idx'])
 
-    infer_func = opts['infer']
-    infer_path = infer_func(test_dataset, model)
-    #infer_path = './infer_basic'
+    #infer_func = opts['infer']
+    #infer_path = infer_func(test_dataset, model)
+    infer_path = './infer_basic'
     pp_func = opts['pp']
     pp_path = pp_func(test_dataset, infer_path)
 
