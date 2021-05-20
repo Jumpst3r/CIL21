@@ -26,8 +26,8 @@ def dense_crf(img, sigm):
 
     img = np.ascontiguousarray(img)
 
-    d.addPairwiseGaussian(sxy=13, compat=3)
-    d.addPairwiseBilateral(sxy=80, srgb=13, rgbim=img, compat=10)
+    d.addPairwiseGaussian(sxy=3, compat=3)
+    d.addPairwiseBilateral(sxy=3, srgb=3, rgbim=img, compat=3)
 
     Q = d.inference(MAX_ITER)
     Q = np.array(Q).reshape((2, h, w))
