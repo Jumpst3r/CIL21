@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader, random_split, Dataset
 import torch.nn.functional as F
 from PIL import Image
 from crf import dense_crf
+import cv2 as cv
 
 
 def get_trainer(epochs):
@@ -121,6 +122,7 @@ def crf(dataset, lbl_path):
 
 
 def thresh(dataset, lbl_path):
+    # best: same as infer_basic!, with thresh = 0.5
     i = 0
     iou_ls = []
     f1_ls = []
@@ -146,7 +148,34 @@ def thresh(dataset, lbl_path):
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
         dir = '.' + basic_dir
         im.save(dir+fname)
-    print("crf: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
+    print("thresh: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
+
+def adaptive(dataset, lbl_path):
+    # best: same as infer_basic!, with thresh = 0.5
+    i = 0
+    iou_ls = []
+    f1_ls = []
+    basic_dir = '/infer_adaptive'
+    thresh = 0.5
+    for batch, idx in dataset:
+        i += 1
+        _, lbl = batch
+        pred_path = lbl_path + '/satImage_' + full_img_nr(idx+1) + '.png'
+        pred = np.array(Image.open(pred_path))
+
+        out = cv.adaptiveThreshold(out, 1, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 0)
+        y = torch.tensor(out).unsqueeze(0)
+
+        f1, iou = evaluate(y, lbl)
+        iou_ls.append(iou)
+        f1_ls.append(f1)
+        print(i, iou, f1, idx + 1)
+
+        im = Image.fromarray(np.array(out, dtype=np.uint8)) #.resize((orig_res, orig_res))
+        fname = '/satImage_' + full_img_nr(idx+1) + '.png'
+        dir = '.' + basic_dir
+        im.save(dir+fname)
+    print("adaptive: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
 
 
 def test(key, opts):
@@ -177,7 +206,7 @@ test_indices = [idx[i] for i in range(0, 25)]
 train_indices = [idx[i] for i in range(25, 100)]
 
 opt_train = {'target_res': 256, 'batch_size': 5, 'epochs': 50, 'augment': True, 'train_idx': train_indices, 'test_idx': test_indices}
-opt_test = {**opt_train, 'infer': infer_basic, 'pp': crf }
+opt_test = {**opt_train, 'infer': infer_basic, 'pp': adaptive}
 options = {'opt_train': opt_train, 'opt_test': opt_test}
 
 orig_res = 400
