@@ -62,6 +62,8 @@ def full_img_nr(idx):
 def infer_basic(dataset, model):
     basic_dir = '/infer_basic'
     i = 0
+    iou_ls = []
+    f1_ls = []
     for batch, idx in dataset:
         i += 1
         img, lbl = batch
@@ -70,7 +72,11 @@ def infer_basic(dataset, model):
         y_tens = torch.sigmoid(y[0])
         imout = np.array(y_tens.detach().cpu().numpy(), dtype=np.float32)
         imout = imout.squeeze(0)
-        print(i)
+
+        f1, iou = evaluate(y_tens, lbl)
+        iou_ls.append(iou)
+        f1_ls.append(f1)
+        print(i, iou, f1, idx + 1)
 
         im = Image.fromarray(np.array(imout * 255, dtype=np.uint8)) #.resize((orig_res, orig_res))
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
@@ -78,9 +84,11 @@ def infer_basic(dataset, model):
         #im.save(dir)
         dir = '.' + basic_dir
         im.save(dir+fname)
+    print("infer: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
     return dir
 
 def crf(dataset, lbl_path):
+    # best: iou:  0.73279184 f1:  0.827103, dlv3_101@256s
     i = 0
     iou_ls = []
     f1_ls = []
@@ -108,7 +116,36 @@ def crf(dataset, lbl_path):
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
         dir = '.' + basic_dir
         im.save(dir+fname)
-    print("iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
+    print("crf: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
+
+
+def thresh(dataset, lbl_path):
+    i = 0
+    iou_ls = []
+    f1_ls = []
+    basic_dir = '/infer_thresh'
+    thresh = 0.5
+    for batch, idx in dataset:
+        i += 1
+        _, lbl = batch
+        pred_path = lbl_path + '/satImage_' + full_img_nr(idx+1) + '.png'
+        pred = np.array(Image.open(pred_path))
+        n = 1 / 255
+        pred = np.array(pred * n, dtype=np.float32)
+
+        out = np.array(pred > thresh)
+        y = torch.tensor(out).unsqueeze(0)
+
+        f1, iou = evaluate(y, lbl)
+        iou_ls.append(iou)
+        f1_ls.append(f1)
+        print(i, iou, f1, idx + 1)
+
+        im = Image.fromarray(np.array(out * 255, dtype=np.uint8)) #.resize((orig_res, orig_res))
+        fname = '/satImage_' + full_img_nr(idx+1) + '.png'
+        dir = '.' + basic_dir
+        im.save(dir+fname)
+    print("crf: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
 
 
 def test(key, opts):
@@ -123,9 +160,9 @@ def test(key, opts):
                            target_size=(opts['target_res'], opts['target_res']))
     test_dataset = torch.utils.data.dataset.Subset(dataset, opts['test_idx'])
 
-    #infer_func = opts['infer']
-    #infer_path = infer_func(test_dataset, model)
-    infer_path = './infer_basic'
+    infer_func = opts['infer']
+    infer_path = infer_func(test_dataset, model)
+    #infer_path = './infer_basic'
     pp_func = opts['pp']
     pp_path = pp_func(test_dataset, infer_path)
 
