@@ -15,6 +15,7 @@ import torchvision
 from torch.utils.data import DataLoader, random_split, Dataset
 import torch.nn.functional as F
 from PIL import Image
+#import crf
 
 
 def get_trainer(epochs):
@@ -71,6 +72,9 @@ def infer_basic(dataset, model, opts):
         imout = imout.squeeze(0)
 
         #add postprocess here
+        #out = dense_crf(img.squeeze(0).detach().cpu().numpy(), imout)
+        #y = torch.tensor(out).unsqueeze(0)
+
         f1, iou = evaluate(y, lbl)
         iou_ls.append(iou)
         f1_ls.append(f1)
@@ -87,7 +91,7 @@ def infer_basic(dataset, model, opts):
 
 def test(key, opts):
     path = model_dir + key + model_suffix
-    path = './deeplabv3_resnet101_trained.pt'
+    #path = './deeplabv3_resnet101_trained.pt'
     model = VisionBaseline(seg_models[key], base_model_options, F.binary_cross_entropy_with_logits, optimizer[key],
                            base_adam_options, opts['epochs'])
     model.load_state_dict(torch.load(path))
