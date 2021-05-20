@@ -60,6 +60,7 @@ def full_img_nr(idx):
 
 
 def infer_basic(dataset, model):
+    # infer: iou:  0.7317977 f1: 0.82485026 dlv3_101@256
     basic_dir = '/infer_basic'
     i = 0
     iou_ls = []
@@ -73,7 +74,7 @@ def infer_basic(dataset, model):
         imout = np.array(y_tens.detach().cpu().numpy(), dtype=np.float32)
         imout = imout.squeeze(0)
 
-        f1, iou = evaluate(y_tens, lbl)
+        f1, iou = evaluate(y, lbl)
         iou_ls.append(iou)
         f1_ls.append(f1)
         print(i, iou, f1, idx + 1)
@@ -88,7 +89,7 @@ def infer_basic(dataset, model):
     return dir
 
 def crf(dataset, lbl_path):
-    # best: iou:  0.73279184 f1:  0.827103, dlv3_101@256s
+    # best: iou:  0.73279184 f1:  0.827103, dlv3_101@256
     i = 0
     iou_ls = []
     f1_ls = []
