@@ -33,7 +33,7 @@ with torch.no_grad():
     cnt = 0
 
     # The input size on which your model was trained
-    SIZE = 192
+    SIZE = 384
 
     means, stds = getnormvals()
 
