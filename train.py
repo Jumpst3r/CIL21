@@ -26,7 +26,7 @@ if __name__ == '__main__':
     pprint(vars(args))
 
     dataset = ArealDataset(root_dir_images='training/training/images/', root_dir_gt='training/training/groundtruth/',
-                           target_size=(128, 128))
+                           target_size=(args.res, args.res))
     kf = KFold(n_splits=4)
     val_IoU = []
     val_F1 = []
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     if args.ckpt_dir != '':
         # train on full dataset to get kaggle score:
         checkpoint_callback = ModelCheckpoint(dirpath=args.ckpt_dir)
-        train_dataloader = DataLoader(dataset, batch_size=5, pin_memory=False, num_workers=8)
+        train_dataloader = DataLoader(dataset, batch_size=args.batch_size, pin_memory=False, num_workers=8)
         model = StackedUNet(lr=args.lr, nb_blocks=args.nb_blocks, unet_mode=args.unet_mode,
                             stacking_mode=args.stacking_mode, loss_mode=args.loss_mode)
         trainer = pl.Trainer(max_epochs=args.max_epochs, gpus=1, stochastic_weight_avg=True, precision=16,

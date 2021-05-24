@@ -39,7 +39,7 @@ def parse_args_function():
         "--loss_mode",
         type=str,
         default='avg',
-        choices=['last', 'avg'],
+        choices=['last', 'avg', 'sum'],
         help="Type of loss"
     )
 
@@ -55,6 +55,13 @@ def parse_args_function():
         type=int,
         default=5,
         help="Batch size"
+    )
+
+    parser.add_argument(
+        "--res",
+        type=int,
+        default=128,
+        help="Training resolution"
     )
 
     parser.add_argument(
