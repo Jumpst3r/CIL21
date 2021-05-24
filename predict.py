@@ -1,4 +1,5 @@
 import os
+from albumentations.augmentations.transforms import CLAHE, ColorJitter
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -12,17 +13,17 @@ from PIL import Image, ImageOps
 from pytorch_lightning.callbacks import ModelCheckpoint
 from models.unet import UNet, StackedUNet
 import matplotlib.pyplot as plt
-from post import crf
 from tqdm import tqdm
 from torchvision import transforms
 import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 from dataset_exploration import getnormvals
+from predictor import EnsemblePredictor
 
 with torch.no_grad():
 
-    model = StackedUNet.load_from_checkpoint('backbone-8/epoch=150-step=3000.ckpt').eval().cuda()
-
+    # model = StackedUNet.load_from_checkpoint('weights.ckpt').eval().cuda()
+    model = EnsemblePredictor(['weights.ckpt','weights-v1.ckpt', 'weights-v2.ckpt', 'weights-v3.ckpt', 'weights-v4.ckpt'], StackedUNet).eval()
     # Iterate through a bunch of pictures in the test set
 
     os.makedirs('out', exist_ok=True)
@@ -41,8 +42,8 @@ with torch.no_grad():
 
     for image_path in tqdm(test_imgs):
         cnt += 1
-        im = np.array(Image.open(image_path))
-        im_org = np.array(Image.open(image_path).resize((SIZE, SIZE)))
+        im = np.array(Image.open(image_path), dtype=np.uint8)
+        im_org = np.array(Image.open(image_path).resize((SIZE, SIZE)), dtype=np.uint8)
         # np_im = np.moveaxis(np.array(im, dtype=np.float32),-1,0)
         np_im_org = np.array(im_org, dtype=np.uint8)
         transform = A.Compose([
@@ -67,12 +68,12 @@ with torch.no_grad():
         imout = np.array(out[0] > 0.8, dtype=np.float32)
 
         # im2 = crf(im[0], out)
-        '''
+        
         f, (ax1, ax2) = plt.subplots(1, 2)
         ax1.imshow(np.moveaxis(np.array(tf2['image']), 0,-1))
         ax2.imshow(imout, cmap='binary_r')
         plt.show()
-        '''
+        
 
         im = Image.fromarray(np.array(imout * 255, dtype=np.uint8)).resize((608, 608))
         im = im.resize((608, 608))

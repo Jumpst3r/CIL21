@@ -32,7 +32,7 @@ class StackedUNet(pl.LightningModule):
         self.nb_blocks = nb_blocks
         self.lr = lr
         self.training = True
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=1e-5)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=1e-5, amsgrad=True)
         self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, gamma=0.5, step_size=100, verbose=True)
         self.alpha = 0.5
         self.loss = F.binary_cross_entropy_with_logits
@@ -61,7 +61,7 @@ class StackedUNet(pl.LightningModule):
             else:
                 feat, y = block(in_stacked)
             yL.append(y)
-            probL.append(conv_up_logits_init(y))
+            probL.append(conv_up_logits_init(F.sigmoid(y)))
             featL.append(feat)
 
         if self.training:
@@ -87,7 +87,10 @@ class StackedUNet(pl.LightningModule):
         out = self.forward(x)
         loss = self.loss(out, y)
         iou = self.IoU(out,y)
+        f1 = F1(out,y)
         self.log('IoU val', iou)
+        self.log('F1 val', f1)
+
         self.log('loss val', loss)
         return {'loss val': loss, 'IoU val': iou}
 
@@ -169,8 +172,6 @@ class UNet(pl.LightningModule):
             x3 = self.down2(x2)
             x4 = self.down3(x3)
             x5 = self.down4(x4)
-            print(x5.shape)
-            print(backbone_feats.shape)
             x5 = x5 + backbone_feats
             x = self.up1(x5, x4)
             x = self.up2(x, x3)

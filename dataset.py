@@ -1,5 +1,6 @@
 from PIL import Image
 import albumentations as A
+from albumentations.augmentations.transforms import CLAHE, ColorJitter
 from albumentations.pytorch.transforms import ToTensorV2
 from torch.utils.data import Dataset
 import torch
@@ -9,6 +10,7 @@ from tqdm import tqdm
 import numpy as np
 import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
+from torchvision import transforms
 
 class ArealDataset(Dataset):
     '''
@@ -47,11 +49,11 @@ class ArealDataset(Dataset):
         if applyTransforms:
             self.transform = A.Compose([
                 A.Resize(target_size[0], target_size[1]),
-                # A.ColorJitter(),
                 A.RandomRotate90(),
                 A.VerticalFlip(),
                 A.HorizontalFlip(),
                 A.Transpose(),
+                A.ColorJitter(),
                 A.Normalize(mean=means, std=stds),
                 ToTensorV2(transpose_mask=True)
             ])
@@ -86,3 +88,33 @@ class ArealDataset(Dataset):
         # use with cat. cross-entropy
         gt = tf['mask'].unsqueeze(0)
         return im.type(torch.float32), gt.type(torch.float32)  
+
+def dataset_transform():
+   
+    cnt = 0
+    images_names = sorted(glob.glob('/home/ml/dds/*_sat.jpg'))
+    gt_name = sorted(glob.glob('/home/ml/dds/*_mask.png'))
+    tf = A.CLAHE(p=0)
+    for _ in range(5000):
+        for im_n, gt_n in zip(images_names, gt_name):
+            pil_im = Image.open(im_n)
+            pil_gt = Image.open(gt_n).convert('L')
+            image =  transforms.ToTensor()(pil_im)
+            gt = torch.tensor(np.where(np.array(pil_gt) >=  1, 1., 0.)).unsqueeze(0)
+            transform = transforms.RandomResizedCrop(400, scale=(0.1, 0.3), ratio=(1.,1.))
+            state = torch.get_rng_state()
+            image = transform(image)
+            torch.set_rng_state(state)
+            gt = transform(gt)
+            if gt.mean() < 0.05: continue
+            gt = np.array(gt*255, dtype=np.uint8)[0]
+
+            im = Image.fromarray(np.array(gt, dtype=np.uint8))
+            im.save(f'training/training/groundtruth/custom-{cnt}-mask.png')
+            npim = np.moveaxis(np.array(image*255, dtype=np.uint8), 0, -1)
+            npim = Image.fromarray(np.array(tf(image=np.array(npim, dtype=np.uint8))['image'], dtype=np.uint8))
+            npim.save(f'training/training/images/custom-{cnt}-input.png')
+            cnt += 1
+            print(f'{cnt}/{10000}')
+            if cnt > 10000:
+                exit()
