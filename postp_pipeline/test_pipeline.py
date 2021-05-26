@@ -60,6 +60,45 @@ def full_img_nr(idx):
     return str(idx)
 
 
+def infer_test_augment(dataset, model):
+    basic_dir = '/infer_test_augment'
+    i = 0
+    iou_ls = []
+    f1_ls = []
+
+    transforms = [torch.rot90(), torch.flip()]
+    for batch, idx in dataset:
+        i += 1
+        img, lbl = batch
+        img0 = img.unsqueeze(0)
+        # TODO: add flips?
+        y = model(img)
+        for i in range(1, 4):
+            imgr = torch.rot90(img0, i)
+            imgr = model(imgr)
+            imgr = torch.rot90(imgr, 4 - i)
+            imgr = torch.sigmoid(imgr[0])
+            y = torch.cat((y, imgr))
+        y_tens = torch.mean(y, 1)
+
+        imout = np.array(y_tens.detach().cpu().numpy(), dtype=np.float32)
+        imout = imout.squeeze(0)
+
+        f1, iou = evaluate(y, lbl)
+        iou_ls.append(iou)
+        f1_ls.append(f1)
+        print(i, iou, f1, idx + 1)
+
+        im = Image.fromarray(np.array(imout * 255, dtype=np.uint8)) #.resize((orig_res, orig_res))
+        fname = '/satImage_' + full_img_nr(idx+1) + '.png'
+        dir = base_dir + basic_dir + fname
+        #im.save(dir)
+        dir = '.' + basic_dir
+        im.save(dir+fname)
+    print("infer: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
+    return dir
+
+
 def infer_basic(dataset, model):
     # infer: iou:  0.7317977 f1: 0.82485026 dlv3_101@256
     basic_dir = '/infer_basic'
