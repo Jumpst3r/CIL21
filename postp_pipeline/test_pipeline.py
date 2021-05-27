@@ -180,7 +180,7 @@ def crf(dataset, lbl_path):
         bilat = np.reshape(bilat, (256, 256, 3))
 
         out = dense_crf(bilat, pred)
-        y = torch.tensor(out).unsqueeze(0)
+        y = torch.tensor(out, dtype=torch.float32).unsqueeze(0)
 
         f1, iou = evaluate(y, lbl)
         iou_ls.append(iou)
@@ -272,11 +272,11 @@ def test(key, opts):
                            target_size=(opts['target_res'], opts['target_res']))
     test_dataset = torch.utils.data.dataset.Subset(dataset, opts['test_idx'])
 
-    infer_func = opts['infer']
-    infer_path = infer_func(test_dataset, model)
-    #infer_path = './infer_basic'
-    #pp_func = opts['pp']
-    #pp_path = pp_func(test_dataset, infer_path)
+    #infer_func = opts['infer']
+    #infer_path = infer_func(test_dataset, model)
+    infer_path = './infer_test_augment'
+    pp_func = opts['pp']
+    pp_path = pp_func(test_dataset, infer_path)
 
     #f1, iou = evaluate(pp_path)
 
@@ -288,7 +288,7 @@ test_indices = [idx[i] for i in range(0, 25)]
 train_indices = [idx[i] for i in range(25, 100)]
 
 opt_train = {'target_res': 256, 'batch_size': 5, 'epochs': 50, 'augment': True, 'train_idx': train_indices, 'test_idx': test_indices}
-opt_test = {**opt_train, 'infer': infer_test_augment, 'pp': adaptive}
+opt_test = {**opt_train, 'infer': infer_test_augment, 'pp': crf}
 options = {'opt_train': opt_train, 'opt_test': opt_test}
 
 orig_res = 400
