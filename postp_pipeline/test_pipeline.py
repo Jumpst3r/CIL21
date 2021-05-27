@@ -65,37 +65,42 @@ def infer_test_augment(dataset, model):
     i = 0
     iou_ls = []
     f1_ls = []
+    iou_ls_r = []
+    f1_ls_r = []
 
-    transforms = [torch.rot90(), torch.flip()]
     for batch, idx in dataset:
         i += 1
         img, lbl = batch
         img0 = img.unsqueeze(0)
         # TODO: add flips?
-        y = model(img)
-        for i in range(1, 4):
-            imgr = torch.rot90(img0, i)
-            imgr = model(imgr)
-            imgr = torch.rot90(imgr, 4 - i)
-            imgr = torch.sigmoid(imgr[0])
+        y0 = model(img0).squeeze(0)
+        y = y0 
+        for j in range(1, 4):
+            imgr = torch.rot90(img0, j, [2,3])
+            imgr = model(imgr).squeeze(0)
+            imgr = torch.rot90(imgr, 4 - j, [1,2])
             y = torch.cat((y, imgr))
-        y_tens = torch.mean(y, 1)
+        y_tens = torch.mean(y, 0).unsqueeze(0)
+        # print(y_tens.shape, y0.shape, lbl.shape)
+        imout = torch.sigmoid(y_tens[0])
+        imout = np.array(imout.detach().cpu().numpy(), dtype=np.float32)
 
-        imout = np.array(y_tens.detach().cpu().numpy(), dtype=np.float32)
-        imout = imout.squeeze(0)
-
-        f1, iou = evaluate(y, lbl)
+        f1, iou = evaluate(y_tens, lbl)
+        f1_r, iou_r = evaluate(y0, lbl)
         iou_ls.append(iou)
         f1_ls.append(f1)
-        print(i, iou, f1, idx + 1)
-
+        iou_ls_r.append(iou_r)
+        f1_ls_r.append(f1_r)
+        print(i, iou, f1, idx + 1, "|", f1-f1_r, iou-iou_r)
+        #print(y0, y_tens)
+        
         im = Image.fromarray(np.array(imout * 255, dtype=np.uint8)) #.resize((orig_res, orig_res))
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
         dir = base_dir + basic_dir + fname
         #im.save(dir)
         dir = '.' + basic_dir
         im.save(dir+fname)
-    print("infer: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
+    print("infer: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls), "iou ref: ", np.mean(iou_ls_r), "f1_ref: ", np.mean(f1_ls_r), "diff iou: ", np.mean(iou_ls) - np.mean(iou_ls_r), "diff f1: ", np.mean(f1_ls) - np.mean(f1_ls_r)) 
     return dir
 
 
@@ -241,8 +246,8 @@ def test(key, opts):
     infer_func = opts['infer']
     infer_path = infer_func(test_dataset, model)
     #infer_path = './infer_basic'
-    pp_func = opts['pp']
-    pp_path = pp_func(test_dataset, infer_path)
+    #pp_func = opts['pp']
+    #pp_path = pp_func(test_dataset, infer_path)
 
     #f1, iou = evaluate(pp_path)
 
