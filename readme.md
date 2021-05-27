@@ -62,3 +62,8 @@ bsub -W 4:00 -o cb_s_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb
 bsub -W 4:00 -o cb_s_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic-backbone --stacking_mode simple --loss_mode sum --ckpt_dir cb_s_4 --max_epochs 150 --res 128
 bsub -W 4:00 -o cb_s_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic-backbone --stacking_mode simple --loss_mode sum --ckpt_dir cb_s_6 --max_epochs 150 --res 128
 ```
+
+### UNet-ResNet, with a single loss at the end
+```
+bsub -W 4:00 -o cb_6_last -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode last --ckpt_dir cb_6_last --max_epochs 150 --res 128
+```
