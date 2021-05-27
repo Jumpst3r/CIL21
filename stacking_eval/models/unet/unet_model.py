@@ -8,7 +8,7 @@ import torchvision
 
 
 class StackedUNet(pl.LightningModule):
-    def __init__(self, lr=1e-4, nb_blocks=6, unet_mode='classic-backbone', stacking_mode='simple', loss_mode='sum'):
+    def __init__(self, lr=1e-4, nb_blocks=6, unet_mode='classic-backbone', stacking_mode='hourglass', loss_mode='sum'):
         """
         lr: learning rate
         nb_blocks: # iterative unet blocks

@@ -21,14 +21,13 @@ from dataset_exploration import getnormvals
 
 with torch.no_grad():
 
-    model = StackedUNet.load_from_checkpoint('cb_s_6/epoch=150-step=3000.ckpt').eval().cuda()
+    model = StackedUNet.load_from_checkpoint('checkpoints/cb_6/epoch=150-step=3000.ckpt').eval().cuda()
 
     # Iterate through a bunch of pictures in the test set
 
     os.makedirs('out', exist_ok=True)
 
     test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
-    # test_imgs = sorted(glob.glob('training/training/images/*.png'))
     cnt = 0
 
     # The input size on which your model was trained
@@ -43,7 +42,6 @@ with torch.no_grad():
         cnt += 1
         im = np.array(Image.open(image_path))
         im_org = np.array(Image.open(image_path).resize((SIZE, SIZE)))
-        # np_im = np.moveaxis(np.array(im, dtype=np.float32),-1,0)
         np_im_org = np.array(im_org, dtype=np.uint8)
         transform = A.Compose([
             A.Resize(SIZE, SIZE),

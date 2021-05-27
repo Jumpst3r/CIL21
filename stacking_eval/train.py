@@ -12,15 +12,6 @@ from pprint import pprint
 from config import args
 
 
-# lr = 1e-4
-# nb_blocks = 4
-# unet_mode = 'classic-backbone'
-# stacking_mode = 'hourglass'
-# loss_mode = 'avg'
-# max_epochs = 150
-# batch_size = 5
-# ckpt_dir = ''
-
 if __name__ == '__main__':
 
     pprint(vars(args))
