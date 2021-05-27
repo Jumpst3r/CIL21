@@ -1,41 +1,64 @@
-# Baseline I
-## This branch implements a simple first baseline:
 
-### How
-We generate a training set by cutting out 20x20 patches from the provided images and labelling them wither as roads (1) or non-roads (0).
+# Iter-UNET: Iterative Road Segmentation from Aerial Images
 
-This behavior is implemented in the file [`feature_extractor.py`](feature_extractor.py)
+TODO Nicolas: put header image
 
-We then load this data and train a very simple CNN (4 convolutional layers, 2 fully connected layers) on the generated patches.
-This behavior is implemented in the file [`baseline_training.py`](baseline_training.py), which also saves the trained model weights as a `.ckpt` file
+TODO: add (link to) final report pdf
 
-We use the F1 metric to asses the quality of our model during training on the validation set, implemented in [`f1_score.py`](f1_score.py).
+## Installation
 
-Finally the file [`predict.py`](predict.py) can be used to vizualize the predictions on the test data.
+## Reproduce Submission
+The final submission can be repoduced with the following commands, run from the `submission` directory.
 
-### Downsides
+TODO: Nicolas
 
-As this is supposed to be a simple baseline, here are a few obvious downsides:
+## Reproduce Baselines
 
-- Classification is on a 20x20 patch level, very coarse
-- No context, neighbouring patches do not change current patch predictions
+The baselines (table ??) can be repoduced with the following commands, run from the `baselines` directory.
 
-### How to play with this baseline:
+TODO: Fabijan
 
-Clone the branch: `git clone --branch baseline-I git@github.com:Jumpst3r/CIL21.git`
+## Reproduce Refinement Experiments
 
-Create & activate a new python environment: `virtualenv env && source ./env/bin/activate`
+The refinement evaluation experiments (table ??) can be repoduced with the following commands, run from the `stacking_eval` directory.
 
-Install required packages : `pip install -r requirements.txt`
+### UNet
+#### 1 block
+```
+bsub -W 4:00 -o c_1 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 1 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_1 --max_epochs 150 --res 12
+```
 
-To used previously trained model & visualize predictions: `python3 predict.py` (make sure to use the latest weights file)
+#### hourglass stacking
+```
+bsub -W 4:00 -o c_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_2 --max_epochs 150 --res 128
+bsub -W 4:00 -o c_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_4 --max_epochs 150 --res 128
+bsub -W 4:00 -o c_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_6 --max_epochs 150 --res 128
+```
 
-### To retrain the network
+#### simple stacking
+```
+bsub -W 4:00 -o c_s_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_2 --max_epochs 150 --res 128
+bsub -W 4:00 -o c_s_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_4 --max_epochs 150 --res 128
+bsub -W 4:00 -o c_s_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_6 --max_epochs 150 --res 128
+```
 
-Create a `patches` directory: `mkdir patches`
+### UNet-ResNet
 
-Run the patch generation script: `python3 feature_extractor.py`
+#### 1 block
+```
+bsub -W 4:00 -o cb_1 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 1 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --ckpt_dir cb_1 --max_epochs 150 --res 128
+```
 
-Run the training script: `python3 baseline_training.py`
+#### hourglass stacking
+```
+bsub -W 4:00 -o cb_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --ckpt_dir cb_2 --max_epochs 150 --res 128
+bsub -W 4:00 -o cb_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --ckpt_dir cb_4 --max_epochs 150 --res 128
+bsub -W 4:00 -o cb_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --ckpt_dir cb_6 --max_epochs 150 --res 128
+```
 
-Visualize predictions: `python3 predict.py` (make sure to use the latest weights file)
+#### simple stacking
+```
+bsub -W 4:00 -o cb_s_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic-backbone --stacking_mode simple --loss_mode sum --ckpt_dir cb_s_2 --max_epochs 150 --res 128
+bsub -W 4:00 -o cb_s_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic-backbone --stacking_mode simple --loss_mode sum --ckpt_dir cb_s_4 --max_epochs 150 --res 128
+bsub -W 4:00 -o cb_s_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic-backbone --stacking_mode simple --loss_mode sum --ckpt_dir cb_s_6 --max_epochs 150 --res 128
+```
