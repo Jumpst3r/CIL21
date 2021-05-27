@@ -74,12 +74,16 @@ def infer_test_augment(dataset, model):
         img0 = img.unsqueeze(0)
         # TODO: add flips?
         y0 = model(img0).squeeze(0)
-        y = y0 
+        y1 = model(torch.flip(img0, [2]))
+        y2 = model(torch.flip(img0, [3]))
+        y = torch.cat((y0, y1, y2))
         for j in range(1, 4):
             imgr = torch.rot90(img0, j, [2,3])
-            imgr = model(imgr).squeeze(0)
-            imgr = torch.rot90(imgr, 4 - j, [1,2])
-            y = torch.cat((y, imgr))
+            imgrr = model(imgr).squeeze(0)
+            imgrf = model(imgr).squeeze(0)
+            imgrr = torch.rot90(imgrr, 4 - j, [1,2])
+            imgrr = torch.rot90(imgrf, 4 - j, [1, 2])
+            y = torch.cat((y, imgrr, imgrf))
         y_tens = torch.mean(y, 0).unsqueeze(0)
         # print(y_tens.shape, y0.shape, lbl.shape)
         imout = torch.sigmoid(y_tens[0])
