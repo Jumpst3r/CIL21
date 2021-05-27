@@ -2,7 +2,7 @@
 import sys
 sys.path.append('../baseline')
 from dataset import ArealDataset, ArealDatasetIdx
-from utils import IoU, F1
+#from utils import IoU, F1
 from baseline_models import *
 from torchvision.models.segmentation import fcn_resnet50, fcn_resnet101, deeplabv3_resnet50, deeplabv3_resnet101
 import argparse
@@ -17,6 +17,28 @@ import torch.nn.functional as F
 from PIL import Image
 from crf import dense_crf
 import cv2 as cv
+
+def F1(inputs, targets):
+    inputs = torch.round(inputs)
+    TP = (inputs * targets).sum()
+    FP = ((1 - targets) * inputs).sum()
+    FN = (targets * (1 - inputs)).sum()
+
+    return TP / (TP + 0.5 * (FP + FN))
+
+
+def IoU(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+    # import pdb; pdb.set_trace()
+    y_true = y_true.type(torch.int32)
+    y_pred = torch.round(y_pred).type(torch.int32)
+    y_pred = (y_pred == 1)
+    y_true = (y_true == 1)
+    eps = 1e-4
+    intersection = (y_pred & y_true).float().sum((1, 2))
+    union = (y_pred | y_true).float().sum((1, 2))
+
+    iou = (intersection + eps) / (union + eps)
+    return iou.mean()
 
 
 def get_trainer(epochs):
@@ -74,6 +96,7 @@ def infer_test_augment(dataset, model):
         img0 = img.unsqueeze(0)
         # TODO: add flips?
         y0 = model(img0).squeeze(0)
+        y0 = torch.sigmoid(y0[0])
         y1 = model(torch.flip(img0, [2])).squeeze(0)
         y2 = model(torch.flip(img0, [3])).squeeze(0)
         y = torch.cat((y0, y1, y2))
@@ -83,7 +106,7 @@ def infer_test_augment(dataset, model):
             imgrf = model(imgr).squeeze(0)
             imgrh = model(imgr).squeeze(0)
             imgrr = torch.rot90(imgrr, 4 - j, [1,2])
-            imgrr = torch.rot90(imgrf, 4 - j, [1, 2])
+            imgrf = torch.rot90(imgrf, 4 - j, [1, 2])
             imgrh = torch.rot90(imgrh, 4 - j, [1, 2]) 
             y = torch.cat((y, imgrr, imgrf, imgrh))
         y_tens = torch.mean(y, 0).unsqueeze(0)
@@ -91,7 +114,7 @@ def infer_test_augment(dataset, model):
         imout = torch.sigmoid(y_tens[0])
         imout = np.array(imout.detach().cpu().numpy(), dtype=np.float32)
 
-        f1, iou = evaluate(y_tens, lbl)
+        f1, iou = evaluate(imout, lbl)
         f1_r, iou_r = evaluate(y0, lbl)
         iou_ls.append(iou)
         f1_ls.append(f1)
