@@ -94,7 +94,6 @@ def infer_test_augment(dataset, model):
         i += 1
         img, lbl = batch
         img0 = img.unsqueeze(0)
-        # TODO: add flips?
         y0 = torch.sigmoid(model(img0).squeeze(0))
         y1 = torch.sigmoid(torch.flip(model(torch.flip(img0, [2])), [2]).squeeze(0))
         y2 = torch.sigmoid(torch.flip(model(torch.flip(img0, [3])), [3]).squeeze(0))
@@ -134,7 +133,7 @@ def infer_test_augment(dataset, model):
 
 
 def infer_basic(dataset, model):
-    # infer: iou:  0.7317977 f1: 0.82485026 dlv3_101@256
+    # infer: iou:  0.7317977 f1: 0.82485026 
     basic_dir = '/infer_basic'
     i = 0
     iou_ls = []
@@ -163,7 +162,7 @@ def infer_basic(dataset, model):
     return dir
 
 def crf(dataset, lbl_path):
-    # best: iou:  0.73279184 f1:  0.827103, dlv3_101@256
+    # best: iou:  0.73279184 f1:  0.827103
     i = 0
     iou_ls = []
     f1_ls = []
@@ -272,13 +271,12 @@ def test(key, opts):
                            target_size=(opts['target_res'], opts['target_res']))
     test_dataset = torch.utils.data.dataset.Subset(dataset, opts['test_idx'])
 
-    #infer_func = opts['infer']
-    #infer_path = infer_func(test_dataset, model)
-    infer_path = './infer_test_augment'
+    infer_func = opts['infer']
+    infer_path = infer_func(test_dataset, model)
+    #infer_path = './infer_test_augment'
     pp_func = opts['pp']
     pp_path = pp_func(test_dataset, infer_path)
 
-    #f1, iou = evaluate(pp_path)
 
 
 pl.seed_everything(2)
@@ -287,7 +285,7 @@ idx = np.random.permutation(np.arange(100))
 test_indices = [idx[i] for i in range(0, 25)]
 train_indices = [idx[i] for i in range(25, 100)]
 
-opt_train = {'target_res': 256, 'batch_size': 5, 'epochs': 50, 'augment': True, 'train_idx': train_indices, 'test_idx': test_indices}
+opt_train = {'target_res': 128, 'batch_size': 5, 'epochs': 50, 'augment': True, 'train_idx': train_indices, 'test_idx': test_indices}
 opt_test = {**opt_train, 'infer': infer_test_augment, 'pp': crf}
 options = {'opt_train': opt_train, 'opt_test': opt_test}
 
