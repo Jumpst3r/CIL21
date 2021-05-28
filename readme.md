@@ -14,9 +14,15 @@ TODO: Nicolas
 
 ## Reproduce Baselines
 
-The baselines (table ??) can be repoduced with the following commands, run from the `baselines` directory.
+The baselines (table ??) can be reproduced with the following commands, run from the `baselines` directory.
+Outputs called `model_name_{f1, iou}.npy` are saved within the same directory and contain the metrics as a `folds x epochs` matrix.
 
-TODO: Fabijan
+```
+bsub -W 240 -oo /your_path/fcn_50_gpu.txt -R "rusage[ngpus_excl_p=1, scratch=10000,mem=10000]" python ./training.py fcn_resnet50 eval 
+bsub -W 240 -oo /your_path/fcn_101_gpu.txt -R "rusage[ngpus_excl_p=1, scratch=10000,mem=10000]" python ./training.py fcn_resnet101 eval  
+bsub -W 240 -oo /your_path/dlv3_50_gpu.txt -R "rusage[ngpus_excl_p=1, scratch=10000,mem=10000]" python ./training.py deeplabv3_resnet50 eval 
+bsub -W 240 -oo /your_path/dlv3_101_gpu.txt -R "rusage[ngpus_excl_p=1, scratch=10000,mem=10000]" python ./training.py deeplabv3_resnet101 eval 
+```
 
 ## Reproduce Refinement Experiments
 
