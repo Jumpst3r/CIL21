@@ -46,9 +46,9 @@ def IoU(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
 
 def get_trainer(epochs):
     if torch.cuda.is_available():
-        return pl.Trainer(max_epochs=epochs, gpus=1, deterministic=True, progress_bar_refresh_rate=0, logger=False)  #
+        return pl.Trainer(max_epochs=epochs, gpus=1, deterministic=True, progress_bar_refresh_rate=0, logger=True)  #
     else:
-        return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0, logger=False)
+        return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0, logger=True)
 
 
 def train_submission(opts):
