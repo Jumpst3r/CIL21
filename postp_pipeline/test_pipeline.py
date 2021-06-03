@@ -76,7 +76,7 @@ def train_submission(opts):
     dataset = ArealDataset(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
                            target_size=(opts['target_res'], opts['target_res']))
 
-    for i, test, train in opts['folds']:
+    for i, (test, train) in enumerate(opts['folds']):
         train_dataset = torch.utils.data.dataset.Subset(dataset, train)
         test_dataset = torch.utils.data.dataset.Subset(dataset, test)
         test_dataset.applyTransforms = opts['augment']
