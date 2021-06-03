@@ -1,5 +1,5 @@
 """ Full assembly of the parts to form the complete network """
-# adapted from https://github.com/milesial/Pytorch-UNet
+# base underlying unet model adapted from https://github.com/milesial/Pytorch-UNet
 
 from .utils import IoU, F1, accuracy
 import numpy as np

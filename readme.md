@@ -1,11 +1,20 @@
 
 # Iter-UNET: Iterative Road Segmentation from Aerial Images
 
-TODO Nicolas: put header image
+![header](header.png)
 
 TODO: add (link to) final report pdf
 
 ## Installation
+
+For convenience we included a `requirements.txt` file which can be used to install the same package we used as follows:
+
+- Install the `python3.7` and `python3-pip` packages
+- Install the virtualenv package: `pip3 install virtualenv`
+- Create a python virtual environment (or skip this and install packages system-wide) : `virtualenv env`
+- Activate the created environment: `source env/bin/activate`
+- Install the requirements: `pip3 install -r requirements.txt`
+
 
 ## Reproduce Submission
 The final submission can be repoduced with the following commands, run from the `submission` directory.
