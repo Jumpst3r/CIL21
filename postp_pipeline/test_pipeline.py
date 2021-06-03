@@ -51,27 +51,6 @@ def get_trainer(epochs):
         return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0, logger=False)
 
 
-def train_baseline(opts):
-    dataset = ArealDataset(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
-                           target_size=(opts['target_res'], opts['target_res']))
-    train_dataset = torch.utils.data.dataset.Subset(dataset, opts['train_idx'])
-    test_dataset = torch.utils.data.dataset.Subset(dataset, opts['test_idx'])
-    test_dataset.applyTransforms = opts['augment']
-    train_dataset.applyTransforms = opts['augment']
-    train_dataloader = DataLoader(train_dataset, batch_size=opts['batch_size'], pin_memory=True, num_workers=8)
-    test_dataloader = DataLoader(test_dataset, batch_size=opts['batch_size'], pin_memory=True, num_workers=8)
-
-    for key in seg_models.keys():
-        model = VisionBaseline(seg_models[key], model_opts[key], loss[key], optimizer[key], optimizer_options[key], opts['epochs'])
-        trainer = get_trainer(opts['epochs'])
-
-        start = time.time()
-        trainer.fit(model, train_dataloader, test_dataloader)
-        end = time.time()
-        print("model: ", key, " time: ", end - start, "s iou: ", model.val_iou, " f1: ", model.val_f1)
-        save_path = model_dir + '/' + key + model_suffix
-        torch.save(model.state_dict(), save_path)
-
 def train_submission(opts):
     dataset = ArealDataset(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
                            target_size=(opts['target_res'], opts['target_res']))
@@ -90,9 +69,9 @@ def train_submission(opts):
         start = time.time()
         trainer.fit(model, train_dataloader, test_dataloader)
         end = time.time()
-        print(" time: ", end - start, "s iou: ", np.mean(model.testIoUs), " f1: ", np.mean(model.testF1s))
-        save_path = model_dir + '/Unet_' + i + model_suffix
+        save_path = model_dir + '/Unet_' + str(i) + model_suffix
         torch.save(model.state_dict(), save_path)
+        print("fold:", i,  "time: ", end - start)
 
 
 def evaluate(img, lbl):
@@ -284,23 +263,22 @@ def adaptive(dataset, lbl_path):
     print("adaptive: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
 
 
-def test(key, opts):
-    path = model_dir + '/' + key + model_suffix
-    #path = './deeplabv3_resnet101_trained.pt'
-    model = VisionBaseline(seg_models[key], base_model_options, F.binary_cross_entropy_with_logits, optimizer[key],
-                           base_adam_options, opts['epochs'])
-    model.load_state_dict(torch.load(path))
-    model.eval()
+def test(opts):
+    for i, (test, train) in enumerate(opts['folds']):
+        path = model_dir + '/Unet_' + str(i) + model_suffix
+        model = StackedUNet()
+        model.load_state_dict(torch.load(path))
+        model.eval()
 
-    dataset = ArealDatasetIdx(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
-                           target_size=(opts['target_res'], opts['target_res']))
-    test_dataset = torch.utils.data.dataset.Subset(dataset, opts['test_idx'])
+        dataset = ArealDatasetIdx(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
+                               target_size=(opts['target_res'], opts['target_res']))
+        test_dataset = torch.utils.data.dataset.Subset(dataset, test)
 
-    infer_func = opts['infer']
-    infer_path = infer_func(test_dataset, model)
-    #infer_path = './infer_test_augment'
-    pp_func = opts['pp']
-    pp_path = pp_func(test_dataset, infer_path)
+        infer_func = opts['infer']
+        infer_path = infer_func(test_dataset, model)
+        #infer_path = './infer_test_augment'
+        pp_func = opts['pp']
+        pp_path = pp_func(test_dataset, infer_path)
 
 
 
