@@ -75,23 +75,24 @@ def train_baseline(opts):
 def train_submission(opts):
     dataset = ArealDataset(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
                            target_size=(opts['target_res'], opts['target_res']))
-    train_dataset = torch.utils.data.dataset.Subset(dataset, opts['train_idx'])
-    test_dataset = torch.utils.data.dataset.Subset(dataset, opts['test_idx'])
-    test_dataset.applyTransforms = opts['augment']
-    train_dataset.applyTransforms = opts['augment']
-    train_dataloader = DataLoader(train_dataset, batch_size=opts['batch_size'], pin_memory=True, num_workers=8)
-    test_dataloader = DataLoader(test_dataset, batch_size=opts['batch_size'], pin_memory=True, num_workers=8)
 
+    for i, test, train in opts['folds']:
+        train_dataset = torch.utils.data.dataset.Subset(dataset, train)
+        test_dataset = torch.utils.data.dataset.Subset(dataset, test)
+        test_dataset.applyTransforms = opts['augment']
+        train_dataset.applyTransforms = opts['augment']
+        train_dataloader = DataLoader(train_dataset, batch_size=opts['batch_size'], pin_memory=True, num_workers=8)
+        test_dataloader = DataLoader(test_dataset, batch_size=opts['batch_size'], pin_memory=True, num_workers=8)
 
-    model = StackedUNet()
-    trainer = get_trainer(opts['epochs'])
-
-    start = time.time()
-    trainer.fit(model, train_dataloader, test_dataloader)
-    end = time.time()
-    print("model: ", key, " time: ", end - start, "s iou: ", model.val_iou, " f1: ", model.val_f1)
-    save_path = model_dir + '/' + key + model_suffix
-    torch.save(model.state_dict(), save_path)
+        model = StackedUNet()
+        trainer = get_trainer(opts['epochs'])
+    
+        start = time.time()
+        trainer.fit(model, train_dataloader, test_dataloader)
+        end = time.time()
+        print(" time: ", end - start, "s iou: ", np.mean(model.testIoUs), " f1: ", np.mean(model.testF1s))
+        save_path = model_dir + '/Unet_' + i + model_suffix
+        torch.save(model.state_dict(), save_path)
 
 
 def evaluate(img, lbl):
@@ -306,10 +307,9 @@ def test(key, opts):
 pl.seed_everything(2)
 
 idx = np.random.permutation(np.arange(100))
-test_indices = [idx[i] for i in range(0, 25)]
-train_indices = [idx[i] for i in range(25, 100)]
+folds = [(idx[0:25], idx[25:100]), (idx[25:50], np.concatenate((idx[0:25], idx[50:100]))), (idx[50:75], np.concatenate((idx[0:50], idx[75:100]))), (idx[75:100], idx[0:75])]
 
-opt_train = {'target_res': 128, 'batch_size': 5, 'epochs': 50, 'augment': True, 'train_idx': train_indices, 'test_idx': test_indices}
+opt_train = {'target_res': 128, 'batch_size': 5, 'epochs': 50, 'augment': True, 'folds': folds}
 opt_test = {**opt_train, 'infer': infer_test_augment, 'pp': crf}
 options = {'opt_train': opt_train, 'opt_test': opt_test}
 
@@ -326,13 +326,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", help="enter \"test\" or \"train\" to test pp pipeline on trained model or to train a model", type=str)
     parser.add_argument("opts", help="enter which options dict should be passed to method", type=str)
-    parser.add_argument("key", help="path to model which should evaluated or to be trained", type=str)
     mode = vars(parser.parse_args())['mode']
     opts = vars(parser.parse_args())['opts']
-    key = vars(parser.parse_args())['key']
 
     if mode == 'train':
         train_submission(options[opts])
 
     if mode == 'test':
-        test(key, options[opts])
+        test(options[opts])
