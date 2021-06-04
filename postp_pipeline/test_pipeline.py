@@ -56,18 +56,20 @@ def train_submission(opts):
                            target_size=(opts['target_res'], opts['target_res']), applyTransforms=opts['augment'])
 
     for i, (test, train) in enumerate(opts['folds']):
+        if(i != 0):
+            continue
         train_dataset = torch.utils.data.dataset.Subset(dataset, train)
         test_dataset = torch.utils.data.dataset.Subset(dataset, test)
         test_dataset.applyTransforms = opts['augment']
         train_dataset.applyTransforms = opts['augment']
         train_dataloader = DataLoader(train_dataset, batch_size=opts['batch_size'], pin_memory=True, num_workers=8)
-        test_dataloader = DataLoader(test_dataset, batch_size=opts['batch_size'], pin_memory=True, num_workers=8)
+        #test_dataloader = DataLoader(test_dataset, batch_size=opts['batch_size'], pin_memory=True, num_workers=8)
 
         model = StackedUNet()
         trainer = get_trainer(opts['epochs'])
     
         start = time.time()
-        trainer.fit(model, train_dataloader, test_dataloader)
+        trainer.fit(model, train_dataloader)
         end = time.time()
         save_path = model_dir + '/Unet_' + str(i) + model_suffix
         torch.save(model.state_dict(), save_path)
