@@ -254,7 +254,7 @@ def adaptive(dataset, lbl_path):
     return np.mean(iou_ls), np.mean(f1_ls)
 
 
-def test(opts):
+def test(opts, val):
     iou_basic = []
     f1_basic = []
     iou_augment = []
@@ -266,6 +266,8 @@ def test(opts):
     dataset = ArealDatasetIdx(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
                               target_size=(opts['target_res'], opts['target_res']))
     for i, (test, train) in enumerate(opts['folds']):
+        if i != val:
+            continue
         path = model_dir + '/Unet_' + str(i) + model_suffix
         model = StackedUNet()
         model.load_state_dict(torch.load(path))
@@ -311,11 +313,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", help="enter \"test\" or \"train\" to test pp pipeline on trained model or to train a model", type=str)
     parser.add_argument("opts", help="enter which options dict should be passed to method", type=str)
+    parser.add_argument("val", help="enter which options dict should be passed to method", type=str)
     mode = vars(parser.parse_args())['mode']
     opts = vars(parser.parse_args())['opts']
+    val = vars(parser.parse_args())['val']
 
     if mode == 'train':
         train_submission(options[opts])
 
     if mode == 'test':
-        test(options[opts])
+        test(options[opts], len(val))
