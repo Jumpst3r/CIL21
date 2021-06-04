@@ -294,6 +294,8 @@ def test(opts, val):
         data[2, i], data[2, i+2] = thresh(dataset, p)
         data[3, i], data[3, i+2] = crf(dataset, p)
 
+    np.save('post_processing_performance.npy', data)
+
 
 
 pl.seed_everything(2)
