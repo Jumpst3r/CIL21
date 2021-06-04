@@ -322,4 +322,4 @@ if __name__ == '__main__':
         train_submission(options[opts])
 
     if mode == 'test':
-        test(options[opts], len(val))
+        test(options[opts], len(val)-1)
