@@ -46,9 +46,9 @@ def IoU(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
 
 def get_trainer(epochs):
     if torch.cuda.is_available():
-        return pl.Trainer(max_epochs=epochs, gpus=1, deterministic=True, progress_bar_refresh_rate=0, logger=True)  #
+        return pl.Trainer(max_epochs=epochs, gpus=1, deterministic=True, progress_bar_refresh_rate=4, logger=True)  #
     else:
-        return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=0, logger=True)
+        return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=4, logger=True)
 
 
 def train_submission(opts):
@@ -138,7 +138,7 @@ def infer_test_augment(dataset, model):
 
 def infer_basic(dataset, model):
     # infer: iou:  0.7317977 f1: 0.82485026
-    basic_dir = '/infer_basic'
+    basic_dir = './infer_basic'
     i = 0
     iou_ls = []
     f1_ls = []
@@ -156,12 +156,9 @@ def infer_basic(dataset, model):
         f1_ls.append(f1)
         print(i, iou, f1, idx + 1)
 
-        im = Image.fromarray(np.array(imout * 255, dtype=np.uint8)) #.resize((orig_res, orig_res))
+        im = Image.fromarray(np.array(imout * 255, dtype=np.uint8))
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
-        dir = base_dir + basic_dir + fname
-        #im.save(dir)
-        dir = '.' + basic_dir
-        im.save(dir+fname)
+        im.save(basic_dir+fname)
     print("infer: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
     return dir
 
@@ -271,14 +268,11 @@ def test(opts):
         model.eval()
 
         dataset = ArealDatasetIdx(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
-                               target_size=(opts['target_res'], opts['target_res']))
+                               target_size=(opts['target_res'], opts['target_res']), applyTransforms=opts['augment'])
         test_dataset = torch.utils.data.dataset.Subset(dataset, test)
 
-        infer_func = opts['infer']
-        infer_path = infer_func(test_dataset, model)
-        #infer_path = './infer_test_augment'
-        pp_func = opts['pp']
-        pp_path = pp_func(test_dataset, infer_path)
+        basic_path = infer_basic(test_dataset, model)
+        #augment_path = infer_test_augment(test_dataset, model)
 
 
 
