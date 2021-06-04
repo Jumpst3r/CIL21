@@ -303,7 +303,7 @@ pl.seed_everything(2)
 idx = np.random.permutation(np.arange(100))
 folds = [(idx[0:25], idx[25:100]), (idx[25:50], np.concatenate((idx[0:25], idx[50:100]))), (idx[50:75], np.concatenate((idx[0:50], idx[75:100]))), (idx[75:100], idx[0:75])]
 
-opt_train = {'target_res': 128, 'batch_size': 10, 'epochs': 300, 'augment': True, 'folds': folds}
+opt_train = {'target_res': 128, 'batch_size': 5, 'epochs': 300, 'augment': True, 'folds': folds}
 opt_test = {**opt_train, 'infer': infer_test_augment, 'pp': crf}
 options = {'opt_train': opt_train, 'opt_test': opt_test}
 
