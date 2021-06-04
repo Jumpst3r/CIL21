@@ -72,6 +72,8 @@ def train_submission(opts):
         save_path = model_dir + '/Unet_' + str(i) + model_suffix
         torch.save(model.state_dict(), save_path)
         print("fold:", i,  "time: ", end - start)
+        del model
+        torch.cuda.empty_cache()
 
 
 def evaluate(img, lbl):
@@ -87,7 +89,7 @@ def full_img_nr(idx):
 
 
 def infer_test_augment(dataset, model):
-    basic_dir = '/infer_test_augment'
+    basic_dir = './infer_test_augment'
     i = 0
     iou_ls = []
     f1_ls = []
@@ -112,9 +114,7 @@ def infer_test_augment(dataset, model):
             imgrh = torch.rot90(imgrh, 4 - j, [1, 2]) 
             y = torch.cat((y, imgrr, imgrf, imgrh))
         y_tens = torch.mean(y, 0).unsqueeze(0)
-        print(y_tens.shape, y0.shape, lbl.shape)
         imout = y_tens.squeeze(0)
-        #imout = torch.sigmoid(y_tens[0])
         imout = np.array(imout.detach().cpu().numpy(), dtype=np.float32)
 
         f1, iou = evaluate(y_tens, lbl)
@@ -124,16 +124,12 @@ def infer_test_augment(dataset, model):
         iou_ls_r.append(iou_r)
         f1_ls_r.append(f1_r)
         print(i, iou, f1, idx + 1, "|", f1-f1_r, iou-iou_r)
-        #print(y0, y_tens)
         
-        im = Image.fromarray(np.array(imout * 255, dtype=np.uint8)) #.resize((orig_res, orig_res))
+        im = Image.fromarray(np.array(imout * 255, dtype=np.uint8))
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
-        dir = base_dir + basic_dir + fname
-        #im.save(dir)
-        dir = '.' + basic_dir
-        im.save(dir+fname)
-    print("infer: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls), "iou ref: ", np.mean(iou_ls_r), "f1_ref: ", np.mean(f1_ls_r), "diff iou: ", np.mean(iou_ls) - np.mean(iou_ls_r), "diff f1: ", np.mean(f1_ls) - np.mean(f1_ls_r)) 
-    return dir
+        im.save(basic_dir+fname)
+    print("infer augment: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls), "iou ref: ", np.mean(iou_ls_r), "f1_ref: ", np.mean(f1_ls_r), "diff iou: ", np.mean(iou_ls) - np.mean(iou_ls_r), "diff f1: ", np.mean(f1_ls) - np.mean(f1_ls_r))
+    return iou_ls, f1_ls
 
 
 def infer_basic(dataset, model):
@@ -160,7 +156,7 @@ def infer_basic(dataset, model):
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
         im.save(basic_dir+fname)
     print("infer: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
-    return dir
+    return iou_ls, f1_ls
 
 def crf(dataset, lbl_path):
     # best: iou:  0.73279184 f1:  0.827103
@@ -261,7 +257,13 @@ def adaptive(dataset, lbl_path):
 
 
 def test(opts):
+    iou_basic = []
+    f1_basic = []
+    iou_augment = []
+    f1_augment = []
     for i, (test, train) in enumerate(opts['folds']):
+        if i != 3:
+            continue
         path = model_dir + '/Unet_' + str(i) + model_suffix
         model = StackedUNet()
         model.load_state_dict(torch.load(path))
@@ -270,9 +272,15 @@ def test(opts):
         dataset = ArealDatasetIdx(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
                                target_size=(opts['target_res'], opts['target_res']))
         test_dataset = torch.utils.data.dataset.Subset(dataset, test)
+        ious_basic, f1s_basic = infer_basic(test_dataset, model)
+        iou_basic += ious_basic
+        f1_basic += f1s_basic
 
-        basic_path = infer_basic(test_dataset, model)
-        #augment_path = infer_test_augment(test_dataset, model)
+        ious_augment, f1s_augment = infer_test_augment(dataset, model)
+        iou_augment += ious_augment
+        f1_augment += f1s_augment
+    print("basic inference, iou: ", np.mean(iou_basic), "f1: ", np.mean(f1_basic))
+    print("augment inference, iou: ", np.mean(iou_augment), "f1: ", np.mean(f1_augment))
 
 
 
