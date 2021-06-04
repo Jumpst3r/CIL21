@@ -151,7 +151,7 @@ def infer_basic(dataset, model):
         imout = np.array(y_tens.detach().cpu().numpy(), dtype=np.float32)
         imout = imout.squeeze(0)
 
-        f1, iou = evaluate(y, lbl)
+        f1, iou = evaluate(y_tens, lbl)
         iou_ls.append(iou)
         f1_ls.append(f1)
         print(i, iou, f1, idx + 1)
