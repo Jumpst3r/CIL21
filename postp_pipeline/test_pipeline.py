@@ -51,12 +51,12 @@ def get_trainer(epochs):
         return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=4, logger=True)
 
 
-def train_submission(opts):
+def train_submission(opts, val):
     dataset = ArealDataset(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
                            target_size=(opts['target_res'], opts['target_res']), applyTransforms=opts['augment'])
 
     for i, (test, train) in enumerate(opts['folds']):
-        if(i != 0):
+        if(i != val):
             continue
         train_dataset = torch.utils.data.dataset.Subset(dataset, train)
         test_dataset = torch.utils.data.dataset.Subset(dataset, test)
@@ -284,10 +284,15 @@ def test(opts, val):
     print("basic inference, iou: ", np.mean(iou_basic), "f1: ", np.mean(f1_basic))
     print("augment inference, iou: ", np.mean(iou_augment), "f1: ", np.mean(f1_augment))
 
-    for p in [basic_path, augment_path]:
-        adaptive(dataset, p)
-        thresh(dataset, p)
-        crf(dataset, p)
+    data = np.zeros((4,4))
+    data[0, 0] = np.mean(iou_basic)
+    data[0, 1] = np.mean(iou_augment)
+    data[0, 2] = np.mean(f1_basic)
+    data[0, 3] = np.mean(f1_augment)
+    for i, p in enumerate([basic_path, augment_path]):
+        data[1, i], data[1, i+2] = adaptive(dataset, p)
+        data[2, i], data[2, i+2] = thresh(dataset, p)
+        data[3, i], data[3, i+2] = crf(dataset, p)
 
 
 
@@ -296,7 +301,7 @@ pl.seed_everything(2)
 idx = np.random.permutation(np.arange(100))
 folds = [(idx[0:25], idx[25:100]), (idx[25:50], np.concatenate((idx[0:25], idx[50:100]))), (idx[50:75], np.concatenate((idx[0:50], idx[75:100]))), (idx[75:100], idx[0:75])]
 
-opt_train = {'target_res': 128, 'batch_size': 5, 'epochs': 200, 'augment': True, 'folds': folds}
+opt_train = {'target_res': 128, 'batch_size': 15, 'epochs': 300, 'augment': True, 'folds': folds}
 opt_test = {**opt_train, 'infer': infer_test_augment, 'pp': crf}
 options = {'opt_train': opt_train, 'opt_test': opt_test}
 
@@ -319,7 +324,7 @@ if __name__ == '__main__':
     val = vars(parser.parse_args())['val']
 
     if mode == 'train':
-        train_submission(options[opts])
+        train_submission(options[opts], len(val)-1)
 
     if mode == 'test':
         test(options[opts], len(val)-1)
