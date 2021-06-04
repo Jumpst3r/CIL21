@@ -90,8 +90,7 @@ def full_img_nr(idx):
     return str(idx)
 
 
-def infer_test_augment(dataset, model):
-    basic_dir = './infer_test_augment'
+def infer_test_augment(basic_dir, dataset, model):
     i = 0
     iou_ls = []
     f1_ls = []
@@ -134,9 +133,8 @@ def infer_test_augment(dataset, model):
     return iou_ls, f1_ls
 
 
-def infer_basic(dataset, model):
+def infer_basic(basic_dir, dataset, model):
     # infer: iou:  0.7317977 f1: 0.82485026
-    basic_dir = './infer_basic'
     i = 0
     iou_ls = []
     f1_ls = []
@@ -165,7 +163,7 @@ def crf(dataset, lbl_path):
     i = 0
     iou_ls = []
     f1_ls = []
-    basic_dir = '/infer_crf'
+    basic_dir = './infer_crf'
     for batch, idx in dataset:
         i += 1
         img, lbl = batch
@@ -187,9 +185,9 @@ def crf(dataset, lbl_path):
 
         im = Image.fromarray(np.array(out * 255, dtype=np.uint8)) #.resize((orig_res, orig_res))
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
-        dir = '.' + basic_dir
-        im.save(dir+fname)
+        im.save(basic_dir+fname)
     print("crf: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
+    return np.mean(iou_ls), np.mean(f1_ls)
 
 
 def thresh(dataset, lbl_path):
@@ -197,7 +195,7 @@ def thresh(dataset, lbl_path):
     i = 0
     iou_ls = []
     f1_ls = []
-    basic_dir = '/infer_thresh'
+    basic_dir = './infer_thresh'
     thresh = 0.5
     for batch, idx in dataset:
         i += 1
@@ -217,23 +215,21 @@ def thresh(dataset, lbl_path):
 
         im = Image.fromarray(np.array(out * 255, dtype=np.uint8)) #.resize((orig_res, orig_res))
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
-        dir = '.' + basic_dir
-        im.save(dir+fname)
+        im.save(basic_dir+fname)
     print("thresh: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
+    return np.mean(iou_ls), np.mean(f1_ls)
 
 def adaptive(dataset, lbl_path):
     # best: adaptive: iou:  0.7309903 f1:  0.8259104964763566
     i = 0
     iou_ls = []
     f1_ls = []
-    basic_dir = '/infer_adaptive'
-    thresh = 0.5
+    basic_dir = './infer_adaptive'
     for batch, idx in dataset:
         i += 1
         img, lbl = batch
         pred_path = lbl_path + '/satImage_' + full_img_nr(idx+1) + '.png'
         pred = np.array(Image.open(pred_path))
-        #pred = np.array(pred > 127, dtype=np.uint8)
         
         out = cv.GaussianBlur(pred, (9,9), 0)
         _, out = cv.threshold(out, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
@@ -251,11 +247,11 @@ def adaptive(dataset, lbl_path):
         f1_ls.append(f1)
         print(i, iou, f1, idx + 1)
 
-        im = Image.fromarray(np.array(out*255, dtype=np.uint8)) #.resize((orig_res, orig_res))
+        im = Image.fromarray(np.array(out*255, dtype=np.uint8))
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
-        dir = '.' + basic_dir
-        im.save(dir+fname)
+        im.save(basic_dir+fname)
     print("adaptive: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
+    return np.mean(iou_ls), np.mean(f1_ls)
 
 
 def test(opts):
@@ -263,26 +259,33 @@ def test(opts):
     f1_basic = []
     iou_augment = []
     f1_augment = []
+
+    basic_path = './infer_basic'
+    augment_path = './infer_test_augment'
+
+    dataset = ArealDatasetIdx(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
+                              target_size=(opts['target_res'], opts['target_res']))
     for i, (test, train) in enumerate(opts['folds']):
-        if i != 3:
-            continue
         path = model_dir + '/Unet_' + str(i) + model_suffix
         model = StackedUNet()
         model.load_state_dict(torch.load(path))
         model.eval()
 
-        dataset = ArealDatasetIdx(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
-                               target_size=(opts['target_res'], opts['target_res']))
         test_dataset = torch.utils.data.dataset.Subset(dataset, test)
-        ious_basic, f1s_basic = infer_basic(test_dataset, model)
+        ious_basic, f1s_basic = infer_basic(basic_path, test_dataset, model)
         iou_basic += ious_basic
         f1_basic += f1s_basic
 
-        ious_augment, f1s_augment = infer_test_augment(dataset, model)
+        ious_augment, f1s_augment = infer_test_augment(augment_path, test_dataset, model)
         iou_augment += ious_augment
         f1_augment += f1s_augment
     print("basic inference, iou: ", np.mean(iou_basic), "f1: ", np.mean(f1_basic))
     print("augment inference, iou: ", np.mean(iou_augment), "f1: ", np.mean(f1_augment))
+
+    for p in [basic_path, augment_path]:
+        adaptive(dataset, p)
+        thresh(dataset, p)
+        crf(dataset, p)
 
 
 
