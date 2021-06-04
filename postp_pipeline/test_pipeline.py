@@ -53,7 +53,7 @@ def get_trainer(epochs):
 
 def train_submission(opts):
     dataset = ArealDataset(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
-                           target_size=(opts['target_res'], opts['target_res']))
+                           target_size=(opts['target_res'], opts['target_res']), applyTransforms=opts['augment'])
 
     for i, (test, train) in enumerate(opts['folds']):
         train_dataset = torch.utils.data.dataset.Subset(dataset, train)
@@ -268,7 +268,7 @@ def test(opts):
         model.eval()
 
         dataset = ArealDatasetIdx(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
-                               target_size=(opts['target_res'], opts['target_res']), applyTransforms=opts['augment'])
+                               target_size=(opts['target_res'], opts['target_res']))
         test_dataset = torch.utils.data.dataset.Subset(dataset, test)
 
         basic_path = infer_basic(test_dataset, model)
@@ -281,7 +281,7 @@ pl.seed_everything(2)
 idx = np.random.permutation(np.arange(100))
 folds = [(idx[0:25], idx[25:100]), (idx[25:50], np.concatenate((idx[0:25], idx[50:100]))), (idx[50:75], np.concatenate((idx[0:50], idx[75:100]))), (idx[75:100], idx[0:75])]
 
-opt_train = {'target_res': 128, 'batch_size': 5, 'epochs': 50, 'augment': True, 'folds': folds}
+opt_train = {'target_res': 128, 'batch_size': 5, 'epochs': 75, 'augment': True, 'folds': folds}
 opt_test = {**opt_train, 'infer': infer_test_augment, 'pp': crf}
 options = {'opt_train': opt_train, 'opt_test': opt_test}
 
