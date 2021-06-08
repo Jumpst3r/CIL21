@@ -158,6 +158,7 @@ def infer_basic(basic_dir, dataset, model):
 
 def crf(dataset, lbl_path):
     # best: iou:  0.73279184 f1:  0.827103
+    print("postp crf")
     i = 0
     iou_ls = []
     f1_ls = []
@@ -189,6 +190,7 @@ def crf(dataset, lbl_path):
 
 
 def thresh(dataset, lbl_path):
+    print("postp const. thresh")
     # best: same as infer_basic!, with thresh = 0.5
     i = 0
     iou_ls = []
@@ -218,6 +220,7 @@ def thresh(dataset, lbl_path):
     return np.mean(iou_ls), np.mean(f1_ls)
 
 def adaptive(dataset, lbl_path):
+    print("postp adaptive")
     # best: adaptive: iou:  0.7309903 f1:  0.8259104964763566
     i = 0
     iou_ls = []
@@ -264,18 +267,20 @@ def test(opts):
     dataset = ArealDatasetIdx(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
                               target_size=(opts['target_res'], opts['target_res']))
 
-    if not opts['infer']:
+    if opts['infer']:
         for i, (test, train) in enumerate(opts['folds']):
             path = model_dir + '/Unet_' + str(i) + model_suffix
             model = StackedUNet()
             model.load_state_dict(torch.load(path))
             model.eval()
 
+            print("infering basic")
             test_dataset = torch.utils.data.dataset.Subset(dataset, test)
             ious_basic, f1s_basic = infer_basic(basic_path, test_dataset, model)
             iou_basic += ious_basic
             f1_basic += f1s_basic
 
+            print("infering augmented")
             ious_augment, f1s_augment = infer_test_augment(augment_path, test_dataset, model)
             iou_augment += ious_augment
             f1_augment += f1s_augment
