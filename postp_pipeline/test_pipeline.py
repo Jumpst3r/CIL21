@@ -51,13 +51,11 @@ def get_trainer(epochs):
         return pl.Trainer(max_epochs=epochs, deterministic=True, progress_bar_refresh_rate=4, logger=True)
 
 
-def train_submission(opts, val):
+def train_submission(opts):
     dataset = ArealDataset(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
                            target_size=(opts['target_res'], opts['target_res']), applyTransforms=opts['augment'])
 
     for i, (test, train) in enumerate(opts['folds']):
-        if(i != val):
-            continue
         train_dataset = torch.utils.data.dataset.Subset(dataset, train)
         test_dataset = torch.utils.data.dataset.Subset(dataset, test)
         test_dataset.applyTransforms = opts['augment']
@@ -231,7 +229,7 @@ def adaptive(dataset, lbl_path):
         pred_path = lbl_path + '/satImage_' + full_img_nr(idx+1) + '.png'
         pred = np.array(Image.open(pred_path))
         
-        out = cv.GaussianBlur(pred, (9,9), 0)
+        out = cv.GaussianBlur(pred, (9, 9), 0)
         _, out = cv.threshold(out, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
         #out = cv.adaptiveThreshold(pred, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0)
         #out = cv.adaptiveThreshold(out, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0)
@@ -254,7 +252,7 @@ def adaptive(dataset, lbl_path):
     return np.mean(iou_ls), np.mean(f1_ls)
 
 
-def test(opts, val):
+def test(opts):
     iou_basic = []
     f1_basic = []
     iou_augment = []
@@ -265,26 +263,26 @@ def test(opts, val):
 
     dataset = ArealDatasetIdx(root_dir_images=root_dir_images, root_dir_gt=root_dir_gt,
                               target_size=(opts['target_res'], opts['target_res']))
-    for i, (test, train) in enumerate(opts['folds']):
-        if i != val:
-            continue
-        path = model_dir + '/Unet_' + str(i) + model_suffix
-        model = StackedUNet()
-        model.load_state_dict(torch.load(path))
-        model.eval()
 
-        test_dataset = torch.utils.data.dataset.Subset(dataset, test)
-        ious_basic, f1s_basic = infer_basic(basic_path, test_dataset, model)
-        iou_basic += ious_basic
-        f1_basic += f1s_basic
+    if not opts['infer']:
+        for i, (test, train) in enumerate(opts['folds']):
+            path = model_dir + '/Unet_' + str(i) + model_suffix
+            model = StackedUNet()
+            model.load_state_dict(torch.load(path))
+            model.eval()
 
-        ious_augment, f1s_augment = infer_test_augment(augment_path, test_dataset, model)
-        iou_augment += ious_augment
-        f1_augment += f1s_augment
-    print("basic inference, iou: ", np.mean(iou_basic), "f1: ", np.mean(f1_basic))
-    print("augment inference, iou: ", np.mean(iou_augment), "f1: ", np.mean(f1_augment))
+            test_dataset = torch.utils.data.dataset.Subset(dataset, test)
+            ious_basic, f1s_basic = infer_basic(basic_path, test_dataset, model)
+            iou_basic += ious_basic
+            f1_basic += f1s_basic
 
-    data = np.zeros((4,4))
+            ious_augment, f1s_augment = infer_test_augment(augment_path, test_dataset, model)
+            iou_augment += ious_augment
+            f1_augment += f1s_augment
+        print("basic inference, iou: ", np.mean(iou_basic), "f1: ", np.mean(f1_basic))
+        print("augment inference, iou: ", np.mean(iou_augment), "f1: ", np.mean(f1_augment))
+
+    data = np.zeros((4, 4))
     data[0, 0] = np.mean(iou_basic)
     data[0, 1] = np.mean(iou_augment)
     data[0, 2] = np.mean(f1_basic)
@@ -304,7 +302,7 @@ idx = np.random.permutation(np.arange(100))
 folds = [(idx[0:25], idx[25:100]), (idx[25:50], np.concatenate((idx[0:25], idx[50:100]))), (idx[50:75], np.concatenate((idx[0:50], idx[75:100]))), (idx[75:100], idx[0:75])]
 
 opt_train = {'target_res': 128, 'batch_size': 5, 'epochs': 300, 'augment': True, 'folds': folds}
-opt_test = {**opt_train, 'infer': infer_test_augment, 'pp': crf}
+opt_test = {**opt_train, 'infer': False}
 options = {'opt_train': opt_train, 'opt_test': opt_test}
 
 orig_res = 400
@@ -320,13 +318,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", help="enter \"test\" or \"train\" to test pp pipeline on trained model or to train a model", type=str)
     parser.add_argument("opts", help="enter which options dict should be passed to method", type=str)
-    parser.add_argument("val", help="enter which options dict should be passed to method", type=str)
     mode = vars(parser.parse_args())['mode']
     opts = vars(parser.parse_args())['opts']
-    val = vars(parser.parse_args())['val']
 
     if mode == 'train':
-        train_submission(options[opts], len(val)-1)
+        train_submission(options[opts])
 
     if mode == 'test':
-        test(options[opts], len(val)-1)
+        test(options[opts])
