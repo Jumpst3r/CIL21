@@ -264,7 +264,7 @@ def baseline_eval(dataset, lbl_path):
         i += 1
         img, lbl = batch
         pred_path = lbl_path + '/satImage_' + full_img_nr(idx + 1) + '.png'
-        pred = np.array(Image.open(pred_path))
+        pred = np.array(Image.open(pred_path), dtype=np.float32)/255
 
         y = torch.tensor(pred).unsqueeze(0)
 
