@@ -172,7 +172,7 @@ def crf(dataset, lbl_path):
         pred = np.array(pred * n, dtype=np.float32)
 
         bilat = np.array(img.squeeze(0).detach().cpu().numpy() * 255, dtype=np.uint8)
-        bilat = np.reshape(bilat, (256, 256, 3))
+        bilat = np.reshape(bilat, (128, 128, 3))
 
         out = dense_crf(bilat, pred)
         y = torch.tensor(out, dtype=torch.float32).unsqueeze(0)
