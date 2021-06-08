@@ -33,6 +33,17 @@ bsub -W 240 -oo /your_path/dlv3_50_gpu.txt -R "rusage[ngpus_excl_p=1, scratch=10
 bsub -W 240 -oo /your_path/dlv3_101_gpu.txt -R "rusage[ngpus_excl_p=1, scratch=10000,mem=10000]" python ./training.py deeplabv3_resnet101 eval 
 ```
 
+## Reproduce Post-processing  
+
+The post-processing (table ??) can be reproduced with the following commands, run from the `postp_pipeline` directory.
+The output called `post_processing_performance.npy` is saved within the same directory and contains the result matrix.
+
+```
+cd ./postp_pipeline && mkdir infer_basic infer_test_augment infer_adaptive infer_thresh infer_crf 
+bsub -W 240 -oo /your_path/all_models_pp_train_gpu.txt -R "rusage[ngpus_excl_p=1, scratch=10000,mem=15000]" python test_pipeline.py train opt_train 
+bsub -W 240 -oo /your_path/all_models_pp_test_gpu.txt -R "rusage[ngpus_excl_p=1, scratch=10000,mem=15000]" python test_pipeline.py test opt_test
+```
+
 ## Reproduce Refinement Experiments
 
 The refinement evaluation experiments (table ??) can be repoduced with the following commands, run from the `stacking_eval` directory.

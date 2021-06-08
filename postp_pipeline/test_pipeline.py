@@ -327,7 +327,7 @@ options = {'opt_train': opt_train, 'opt_test': opt_test}
 
 orig_res = 400
 
-base_dir = '/cluster/scratch/fdokic/CIL21'
+base_dir = '.'
 model_dir = base_dir + '/pp_models'
 model_suffix = "_cv_trained.pt"
 
