@@ -186,7 +186,7 @@ def crf(dataset, lbl_path):
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
         im.save(basic_dir+fname)
     print("crf: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
-    return np.mean(iou_ls), np.mean(f1_ls)
+    return (np.mean(iou_ls), np.std(iou_ls)), (np.mean(f1_ls), np.std(f1_ls))
 
 
 def thresh(dataset, lbl_path):
@@ -217,7 +217,7 @@ def thresh(dataset, lbl_path):
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
         im.save(basic_dir+fname)
     print("thresh: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
-    return np.mean(iou_ls), np.mean(f1_ls)
+    return (np.mean(iou_ls), np.std(iou_ls)), (np.mean(f1_ls), np.std(f1_ls))
 
 def adaptive(dataset, lbl_path):
     print("postp adaptive")
@@ -235,10 +235,6 @@ def adaptive(dataset, lbl_path):
         out = cv.GaussianBlur(pred, (9, 9), 0)
         _, out = cv.threshold(out, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
         #out = cv.adaptiveThreshold(pred, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0)
-        #out = cv.adaptiveThreshold(out, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0)
-        #out = cv.adaptiveThreshold(out, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0) 
-        #out = cv.adaptiveThreshold(out, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0) 
-        #out = cv.adaptiveThreshold(out, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 1555, 0) 
         out = out / 255
         
         y = torch.tensor(out).unsqueeze(0)
@@ -252,7 +248,7 @@ def adaptive(dataset, lbl_path):
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
         im.save(basic_dir+fname)
     print("adaptive: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
-    return np.mean(iou_ls), np.mean(f1_ls)
+    return (np.mean(iou_ls), np.std(iou_ls)), (np.mean(f1_ls), np.std(f1_ls))
 
 
 def baseline_eval(dataset, lbl_path):
@@ -274,7 +270,7 @@ def baseline_eval(dataset, lbl_path):
         print(i, iou, f1, idx + 1)
 
     print("baseline: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
-    return np.mean(iou_ls), np.mean(f1_ls)
+    return (np.mean(iou_ls), np.std(iou_ls)), (np.mean(f1_ls), np.std(f1_ls))
 
 
 def test(opts):
@@ -309,16 +305,12 @@ def test(opts):
         print("basic inference, iou: ", np.mean(iou_basic), "f1: ", np.mean(f1_basic))
         print("augment inference, iou: ", np.mean(iou_augment), "f1: ", np.mean(f1_augment))
 
-    data = np.zeros((4, 4))
-    data[0, 0] = np.mean(iou_basic)
-    data[0, 1] = np.mean(iou_augment)
-    data[0, 2] = np.mean(f1_basic)
-    data[0, 3] = np.mean(f1_augment)
+    data = np.zeros((4, 8))
     for i, p in enumerate([basic_path, augment_path]):
-        data[0, i], data[0, i+2] = baseline_eval(dataset, p)
-        data[1, i], data[1, i+2] = adaptive(dataset, p)
-        data[2, i], data[2, i+2] = thresh(dataset, p)
-        data[3, i], data[3, i+2] = crf(dataset, p)
+        (data[0, 4*i], data[0, 4*i+1]), (data[0, 4*i+2], data[0, 4*i+3]) = baseline_eval(dataset, p)
+        (data[1, 4*i], data[1, 4*i+1]), (data[1, 4*i+2], data[1, 4*i+3]) = adaptive(dataset, p)
+        (data[2, 4*i], data[2, 4*i+1]), (data[2, 4*i+2], data[2, 4*i+3]) = thresh(dataset, p)
+        (data[3, 4*i], data[3, 4*i+1]), (data[3, 4*i+2], data[3, 4*i+3]) = crf(dataset, p)
 
     np.save('post_processing_performance.npy', data)
 
