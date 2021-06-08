@@ -255,6 +255,28 @@ def adaptive(dataset, lbl_path):
     return np.mean(iou_ls), np.mean(f1_ls)
 
 
+def baseline_eval(dataset, lbl_path):
+    print("baseline eval")
+    i = 0
+    iou_ls = []
+    f1_ls = []
+    for batch, idx in dataset:
+        i += 1
+        img, lbl = batch
+        pred_path = lbl_path + '/satImage_' + full_img_nr(idx + 1) + '.png'
+        pred = np.array(Image.open(pred_path))
+
+        y = torch.tensor(pred).unsqueeze(0)
+
+        f1, iou = evaluate(y, lbl)
+        iou_ls.append(iou)
+        f1_ls.append(f1)
+        print(i, iou, f1, idx + 1)
+
+    print("baseline: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
+    return np.mean(iou_ls), np.mean(f1_ls)
+
+
 def test(opts):
     iou_basic = []
     f1_basic = []
@@ -293,6 +315,7 @@ def test(opts):
     data[0, 2] = np.mean(f1_basic)
     data[0, 3] = np.mean(f1_augment)
     for i, p in enumerate([basic_path, augment_path]):
+        data[0, i], data[0, i+2] = baseline_eval(dataset, p)
         data[1, i], data[1, i+2] = adaptive(dataset, p)
         data[2, i], data[2, i+2] = thresh(dataset, p)
         data[3, i], data[3, i+2] = crf(dataset, p)
