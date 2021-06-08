@@ -205,7 +205,7 @@ def thresh(dataset, lbl_path):
         n = 1 / 255
         pred = np.array(pred * n, dtype=np.float32)
 
-        out = np.array(pred > thresh)
+        out = np.array(pred > thresh, dtype=np.float32)
         y = torch.tensor(out).unsqueeze(0)
 
         f1, iou = evaluate(y, lbl)
@@ -213,7 +213,7 @@ def thresh(dataset, lbl_path):
         f1_ls.append(f1)
         print(i, iou, f1, idx + 1)
 
-        im = Image.fromarray(np.array(out * 255, dtype=np.uint8)) #.resize((orig_res, orig_res))
+        im = Image.fromarray(np.array(out * 255, dtype=np.uint8))
         fname = '/satImage_' + full_img_nr(idx+1) + '.png'
         im.save(basic_dir+fname)
     print("thresh: iou: ", np.mean(iou_ls), "f1: ", np.mean(f1_ls))
