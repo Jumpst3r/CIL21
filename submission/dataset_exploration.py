@@ -10,7 +10,7 @@ This file can be used to gather statistics about the dataset (per channel means 
 
 
 def getnormvals():
-    images_names = sorted(glob.glob('training/training/images/*.png'))
+    images_names = sorted(glob.glob('training/images/*.png'))
 
     means = []
     stds = []

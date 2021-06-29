@@ -6,6 +6,8 @@ import torch
 import torch.nn.functional as F
 from albumentations.augmentations.functional import rot90
 from albumentations.pytorch.transforms import ToTensorV2
+from torchvision import transforms
+
 '''
 Two goals:
 
@@ -28,14 +30,30 @@ class EnsemblePredictor(pl.LightningModule):
         factors = list(range(1, 5))
         predictions = []
         dumb = self.models[0](x)
+        vertFlip =  transforms.RandomVerticalFlip(p=1)
+        horiFlip =  transforms.RandomHorizontalFlip(p=1)
+
+        '''
         for f in factors:
-            inp = x + torch.normal(mean=torch.zeros(x.shape), std=0.05).cuda()
+            inp = x
             rot = torch.rot90(inp, f, dims=(2, 3))
             modelAvg = (sum([
                 torch.rot90(m(rot), -f, dims=(2, 3))
                 for  m in self.models
             ]) / len(self.models))
             predictions.append(modelAvg)
+        final = sum(predictions) / len(predictions)
+        '''
+
+        inp = x
+        vflip = vertFlip(inp)
+        hflip = horiFlip(inp)
+
+        modelAvg = (sum([
+            vertFlip(m(vflip)) + horiFlip(m(hflip)) for m in self.models
+            ]) / len(self.models))
+        predictions.append(modelAvg)
+
         final = sum(predictions) / len(predictions)
 
         f, (ax1, ax2) = plt.subplots(1, 2)
