@@ -68,4 +68,5 @@ if __name__ == '__main__':
                             stacking_mode=args.stacking_mode, loss_mode=args.loss_mode)
         trainer = pl.Trainer(max_epochs=args.max_epochs, gpus=1, stochastic_weight_avg=True, precision=16,
                              deterministic=True, checkpoint_callback=checkpoint_callback)
+        dataset.applyTransforms = True
         trainer.fit(model, train_dataloader)
