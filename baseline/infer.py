@@ -1,37 +1,35 @@
-import os
-import numpy as np
-import matplotlib.image as mpimg
-import re
-
-# ==============
-import os
-import torch
-from torch import nn
-import torch.nn.functional as F
-import pytorch_lightning as pl
-from torch.utils.data import DataLoader, random_split, TensorDataset
-from pytorch_lightning.metrics import functional as FM
-import numpy as np
+import argparse
 import glob
+# =============
+import os
+import re
+import time
+
+import albumentations as A
 import cv2
+import cv2 as cv
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+import numpy as np
+import pytorch_lightning as pl
+import torch
+import torch.nn.functional as F
+from albumentations.pytorch.transforms import ToTensorV2
 from PIL import Image, ImageOps
 from pytorch_lightning.callbacks import ModelCheckpoint
-import matplotlib.pyplot as plt
-from tqdm import tqdm
+from pytorch_lightning.metrics import functional as FM
+from torch import nn
+from torch.utils.data import DataLoader, TensorDataset, random_split
 from torchvision import transforms
-import albumentations as A
-from albumentations.pytorch.transforms import ToTensorV2
+from torchvision.models.segmentation import (deeplabv3_resnet50,
+                                             deeplabv3_resnet101, fcn_resnet50,
+                                             fcn_resnet101)
+from tqdm import tqdm
 
 from baseline_models import *
-from torchvision.models.segmentation import fcn_resnet50, fcn_resnet101, deeplabv3_resnet50, deeplabv3_resnet101
-import argparse
-import time
-import cv2 as cv
 
+foreground_threshold = 0.5  # percentage of pixels > 1 required to assign a foreground label to a patch
 
-import glob
-
-foreground_threshold = 0.5 # percentage of pixels > 1 required to assign a foreground label to a patch
 
 # assign a label to a patch
 def patch_to_label(patch):
@@ -44,14 +42,15 @@ def patch_to_label(patch):
 
 def mask_to_submission_strings(image_filename):
     """Reads a single image and outputs the strings that should go into the submission file"""
-    img_number = int(re.search(r"\d+.png", image_filename).group(0)[:-4]) #crop .png
+    img_number = int(re.search(r"\d+.png",
+                               image_filename).group(0)[:-4])  #crop .png
     im = mpimg.imread(image_filename)
     patch_size = 16
     for j in range(0, im.shape[1], patch_size):
         for i in range(0, im.shape[0], patch_size):
             patch = im[i:i + patch_size, j:j + patch_size]
             label = patch_to_label(patch)
-            yield("{:03d}_{}_{},{}".format(img_number, j, i, label))
+            yield ("{:03d}_{}_{},{}".format(img_number, j, i, label))
 
 
 def masks_to_submission(submission_filename, *image_filenames):
@@ -59,12 +58,16 @@ def masks_to_submission(submission_filename, *image_filenames):
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
         for fn in image_filenames[0:]:
-            f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn))
+            f.writelines('{}\n'.format(s)
+                         for s in mask_to_submission_strings(fn))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("key", help="model which should be trained", type=str)
-    parser.add_argument("mode", help="native or cropped inference style", type=str)
+    parser.add_argument("mode",
+                        help="native or cropped inference style",
+                        type=str)
     key = vars(parser.parse_args())['key']
     mode = vars(parser.parse_args())['mode']
 
@@ -74,15 +77,15 @@ if __name__ == '__main__':
 
     def getNorms():
         means = []
-        stds =  []
+        stds = []
         if len(means) == 0:
             count = 0
-            d = 1/255
+            d = 1 / 255
             for imname in tqdm(test_imgs):
                 pil_im = np.array(Image.open(imname))
-                pil_im = pil_im * d# normalize betweeen 0 1
-                means.append([pil_im[:,:,c].mean() for c in range(3)])
-                stds.append([pil_im[:,:,c].std() for c in range(3)])
+                pil_im = pil_im * d  # normalize betweeen 0 1
+                means.append([pil_im[:, :, c].mean() for c in range(3)])
+                stds.append([pil_im[:, :, c].std() for c in range(3)])
                 count += 1
             means = list(np.array(means).sum(axis=0) / count)
             stds = list(np.array(stds).sum(axis=0) / count)
@@ -90,7 +93,8 @@ if __name__ == '__main__':
 
     def getModel(key):
         path = "./trained_models/" + key + "_trained.pt"
-        model = VisionBaseline(seg_models[key], base_model_options, F.binary_cross_entropy_with_logits, optimizer,
+        model = VisionBaseline(seg_models[key], base_model_options,
+                               F.binary_cross_entropy_with_logits, optimizer,
                                base_adam_options, 100)
         model.load_state_dict(torch.load(path))
         model.eval()
@@ -102,8 +106,8 @@ if __name__ == '__main__':
         test_imgs = sorted(glob.glob('test_images/*.png'))
         cnt = 0
         # The input size on which your model was trained
-        new_size = 389 #194
-        ref = 256 #128
+        new_size = 389  #194
+        ref = 256  #128
         diff = new_size - ref
 
         means, stds = getNorms()
@@ -139,8 +143,8 @@ if __name__ == '__main__':
                 im_c = transform(image=im_c)
                 im_c = im_c['image'].unsqueeze(0)
                 tf[i, :, :, :] = im_c
-                
-            y = model(tf) #shape: (4, 1, 128, 128)
+
+            y = model(tf)  #shape: (4, 1, 128, 128)
             y = np.array(y.detach().cpu().numpy(), dtype=np.float32)
 
             comb = np.zeros((new_size, new_size))
@@ -151,17 +155,19 @@ if __name__ == '__main__':
 
             comb *= mean_mat
 
-            out = np.array(F.sigmoid(torch.tensor(comb)).detach().cpu().numpy(), dtype=np.float32)
+            out = np.array(F.sigmoid(
+                torch.tensor(comb)).detach().cpu().numpy(),
+                           dtype=np.float32)
             #out = np.array(out > 0.5, dtype=np.float32)
 
             out = np.array(out * 255, dtype=np.uint8)
 
-            out = cv.adaptiveThreshold(out, 1, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 0)
+            out = cv.adaptiveThreshold(out, 1, cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                       cv.THRESH_BINARY, 11, 0)
             im = Image.fromarray(out).resize((608, 608))
             #im = im.resize((608, 608))
             fname = image_path[image_path.rfind('_') - 4:]
-            im.save('./out_'+key+'_native_thresh/' + fname)
-
+            im.save('./out_' + key + '_native_thresh/' + fname)
 
     def infer(key):
         model = getModel(key)
@@ -188,10 +194,10 @@ if __name__ == '__main__':
             im = tf['image'].unsqueeze(0)
 
             y = model(im)
-            out = np.array(F.sigmoid(y[0]).detach().cpu().numpy(), dtype=np.float32)
+            out = np.array(F.sigmoid(y[0]).detach().cpu().numpy(),
+                           dtype=np.float32)
 
             imout = np.array(out[0] > 0.5, dtype=np.float32)
-
             '''
             f, (ax1, ax2) = plt.subplots(1, 2)
             ax1.imshow(np.moveaxis(np.array(tf2['image']), 0,-1))
@@ -199,10 +205,11 @@ if __name__ == '__main__':
             plt.show()
             '''
 
-            im = Image.fromarray(np.array(imout * 255, dtype=np.uint8)).resize((608, 608))
+            im = Image.fromarray(np.array(imout * 255, dtype=np.uint8)).resize(
+                (608, 608))
             im = im.resize((608, 608))
             fname = image_path[image_path.rfind('_') - 4:]
-            im.save('./out_'+key+'/' + fname)
+            im.save('./out_' + key + '/' + fname)
 
     if mode == "native":
         inferNativeRes(key)
@@ -215,5 +222,3 @@ if __name__ == '__main__':
 
     masks_to_submission(submission_filename, *image_filenames)
     print("done! File: ", submission_filename)
-
-

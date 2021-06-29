@@ -1,14 +1,20 @@
 """ Full assembly of the parts to form the complete network """
 # base underlying unet model adapted from https://github.com/milesial/Pytorch-UNet
 
-from .utils import IoU, F1, accuracy
 import numpy as np
-from .unet_parts import *
 import torchvision
+
+from .unet_parts import *
+from .utils import F1, IoU, accuracy
 
 
 class StackedUNet(pl.LightningModule):
-    def __init__(self, lr=1e-4, nb_blocks=6, unet_mode='classic-backbone', stacking_mode='hourglass', loss_mode='sum'):
+    def __init__(self,
+                 lr=1e-4,
+                 nb_blocks=6,
+                 unet_mode='classic-backbone',
+                 stacking_mode='hourglass',
+                 loss_mode='sum'):
         """
         lr: learning rate
         nb_blocks: # iterative unet blocks
@@ -28,29 +34,53 @@ class StackedUNet(pl.LightningModule):
         # stacked UNet model
         if stacking_mode == 'hourglass':
             enc_dim = 64
-            self.initBlock = UNet(n_channels=3, return_features=True, mode=unet_mode)
+            self.initBlock = UNet(n_channels=3,
+                                  return_features=True,
+                                  mode=unet_mode)
             self.blocks = nn.ModuleList(
-                UNet(n_channels=enc_dim, return_features=True, mode=unet_mode) for _ in range(nb_blocks - 1))
-            self.conv_up_input = nn.Conv2d(in_channels=3, out_channels=enc_dim, kernel_size=1, padding=0)
-            self.conv_up_logits_init = nn.Conv2d(in_channels=1, out_channels=enc_dim, kernel_size=1, padding=0)
+                UNet(n_channels=enc_dim, return_features=True, mode=unet_mode)
+                for _ in range(nb_blocks - 1))
+            self.conv_up_input = nn.Conv2d(in_channels=3,
+                                           out_channels=enc_dim,
+                                           kernel_size=1,
+                                           padding=0)
+            self.conv_up_logits_init = nn.Conv2d(in_channels=1,
+                                                 out_channels=enc_dim,
+                                                 kernel_size=1,
+                                                 padding=0)
             self.conv_up_logits = nn.ModuleList(
-                nn.Conv2d(in_channels=1, out_channels=enc_dim, kernel_size=1, padding=0) for _ in range(nb_blocks - 1))
+                nn.Conv2d(in_channels=1,
+                          out_channels=enc_dim,
+                          kernel_size=1,
+                          padding=0) for _ in range(nb_blocks - 1))
         elif stacking_mode == 'simple':
-            self.initBlock = UNet(n_channels=3, return_features=False, mode=unet_mode)
+            self.initBlock = UNet(n_channels=3,
+                                  return_features=False,
+                                  mode=unet_mode)
             self.blocks = nn.ModuleList(
-                UNet(n_channels=4, return_features=False, mode=unet_mode) for _ in range(nb_blocks - 1))
+                UNet(n_channels=4, return_features=False, mode=unet_mode)
+                for _ in range(nb_blocks - 1))
         else:
-            raise RuntimeError('Unsupported stacking mode {} in StackedUNet()'.format(stacking_mode))
+            raise RuntimeError(
+                'Unsupported stacking mode {} in StackedUNet()'.format(
+                    stacking_mode))
 
         if 'backbone' in unet_mode:
             rs50 = torchvision.models.resnet50(pretrained=True)
-            self.backbone = torch.nn.Sequential(rs50.conv1, rs50.bn1, rs50.relu, rs50.maxpool, rs50.layer1, rs50.layer2,
+            self.backbone = torch.nn.Sequential(rs50.conv1, rs50.bn1,
+                                                rs50.relu, rs50.maxpool,
+                                                rs50.layer1, rs50.layer2,
                                                 rs50.layer3)
 
         # optimizer
         self.lr = lr
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=1e-5)
-        self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, gamma=0.5, step_size=100, verbose=True)
+        self.optimizer = torch.optim.Adam(self.parameters(),
+                                          lr=self.lr,
+                                          weight_decay=1e-5)
+        self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,
+                                                            gamma=0.5,
+                                                            step_size=100,
+                                                            verbose=True)
         self.loss = F.binary_cross_entropy_with_logits
 
         # hyper parameters
@@ -91,7 +121,8 @@ class StackedUNet(pl.LightningModule):
             probL = [p1]
             featL = [feat1]
             in_stacked = self.conv_up_input(x)
-            for conv_up_logits_init, block in zip(self.conv_up_logits, self.blocks):
+            for conv_up_logits_init, block in zip(self.conv_up_logits,
+                                                  self.blocks):
                 # input of the last stack + feature output of the last stack + probability prediction of the last stack
                 in_stacked = in_stacked + featL[-1] + probL[-1]
                 feat, y = block(in_stacked)
@@ -118,7 +149,9 @@ class StackedUNet(pl.LightningModule):
             elif self.loss_mode == 'last':
                 loss = self.loss(yL[-1], y)
             else:
-                raise RuntimeError('Unsupported loss mode {} in training_step()'.format(self.los_mode))
+                raise RuntimeError(
+                    'Unsupported loss mode {} in training_step()'.format(
+                        self.los_mode))
         self.log('training loss', loss)
         self.log('lr', self.lr)
         return loss
@@ -157,7 +190,11 @@ class StackedUNet(pl.LightningModule):
 
 
 class UNet(pl.LightningModule):
-    def __init__(self, n_channels=3, n_classes=1, return_features=False, mode='classic'):
+    def __init__(self,
+                 n_channels=3,
+                 n_classes=1,
+                 return_features=False,
+                 mode='classic'):
         """
         n_channels: # channels of the input
         n_classes: # channels of the output
@@ -199,7 +236,8 @@ class UNet(pl.LightningModule):
                 return x, logits
             else:
                 return logits
-        elif self.mode == 'classic' or (self.mode == 'classic-backbone' and backbone_feats is None):
+        elif self.mode == 'classic' or (self.mode == 'classic-backbone'
+                                        and backbone_feats is None):
             x1 = self.inc(x)
             x2 = self.down1(x1)
             x3 = self.down2(x2)
@@ -215,4 +253,5 @@ class UNet(pl.LightningModule):
             else:
                 return logits
         else:
-            raise RuntimeError('Unsupported mode {} in UNet.forward()'.format(self.mode))
+            raise RuntimeError('Unsupported mode {} in UNet.forward()'.format(
+                self.mode))

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import os
-import numpy as np
-import matplotlib.image as mpimg
 import re
 
-foreground_threshold = 0.5 # percentage of pixels > 1 required to assign a foreground label to a patch
+import matplotlib.image as mpimg
+import numpy as np
+
+foreground_threshold = 0.5  # percentage of pixels > 1 required to assign a foreground label to a patch
+
 
 # assign a label to a patch
 def patch_to_label(patch):
@@ -25,7 +27,7 @@ def mask_to_submission_strings(image_filename):
         for i in range(0, im.shape[0], patch_size):
             patch = im[i:i + patch_size, j:j + patch_size]
             label = patch_to_label(patch)
-            yield("{:03d}_{}_{},{}".format(img_number, j, i, label))
+            yield ("{:03d}_{}_{},{}".format(img_number, j, i, label))
 
 
 def masks_to_submission(submission_filename, *image_filenames):
@@ -33,7 +35,9 @@ def masks_to_submission(submission_filename, *image_filenames):
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
         for fn in image_filenames[0:]:
-            f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn))
+            f.writelines('{}\n'.format(s)
+                         for s in mask_to_submission_strings(fn))
+
 
 import glob
 

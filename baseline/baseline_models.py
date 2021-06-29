@@ -6,7 +6,7 @@ Torchvision Models semantinc segmentation:
     - DeepLabV3 ResNet101
     - DeepLabV3 MobileNetV3
     - Lite R-ASPP MobileNetV3
-
+ 
 Dataset:
     - Kaggle training set
     - Kaggle test set
@@ -29,27 +29,50 @@ from sklearn.model_selection import KFold
 """
 
 import numpy as np
-from torchvision import models, transforms, datasets, utils
-from torchvision.models.segmentation import fcn_resnet50, fcn_resnet101, deeplabv3_resnet50, deeplabv3_resnet101
+import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, random_split
-import pytorch_lightning as pl
-from utils import IoU, DiceBCELoss, IoULoss, FocalLoss, F1
+from torchvision import datasets, models, transforms, utils
+from torchvision.models.segmentation import (deeplabv3_resnet50,
+                                             deeplabv3_resnet101, fcn_resnet50,
+                                             fcn_resnet101)
+
+from utils import F1, DiceBCELoss, FocalLoss, IoU, IoULoss
 
 base_model_options = dict(pretrained=False, progress=True, num_classes=1)
 base_adam_options = dict(lr=1e-4, weight_decay=1e-5)
-seg_models = {"fcn_resnet50": fcn_resnet50, "fcn_resnet101": fcn_resnet101,
-              "deeplabv3_resnet50": deeplabv3_resnet50, "deeplabv3_resnet101": deeplabv3_resnet101}
-model_opts = {"fcn_resnet50": base_model_options, "fcn_resnet101": base_model_options,
-              "deeplabv3_resnet50": base_model_options, "deeplabv3_resnet101": base_model_options}
-loss = {"fcn_resnet50": F.binary_cross_entropy_with_logits, "fcn_resnet101": F.binary_cross_entropy_with_logits,
-        "deeplabv3_resnet50": F.binary_cross_entropy_with_logits,
-        "deeplabv3_resnet101": F.binary_cross_entropy_with_logits}
-optimizer = {"fcn_resnet50": torch.optim.Adam, "fcn_resnet101": torch.optim.Adam,
-             "deeplabv3_resnet50": torch.optim.Adam, "deeplabv3_resnet101": torch.optim.Adam}
-optimizer_options = {"fcn_resnet50": base_adam_options, "fcn_resnet101": base_adam_options,
-                     "deeplabv3_resnet50": base_adam_options, "deeplabv3_resnet101": base_adam_options}
+seg_models = {
+    "fcn_resnet50": fcn_resnet50,
+    "fcn_resnet101": fcn_resnet101,
+    "deeplabv3_resnet50": deeplabv3_resnet50,
+    "deeplabv3_resnet101": deeplabv3_resnet101
+}
+model_opts = {
+    "fcn_resnet50": base_model_options,
+    "fcn_resnet101": base_model_options,
+    "deeplabv3_resnet50": base_model_options,
+    "deeplabv3_resnet101": base_model_options
+}
+loss = {
+    "fcn_resnet50": F.binary_cross_entropy_with_logits,
+    "fcn_resnet101": F.binary_cross_entropy_with_logits,
+    "deeplabv3_resnet50": F.binary_cross_entropy_with_logits,
+    "deeplabv3_resnet101": F.binary_cross_entropy_with_logits
+}
+optimizer = {
+    "fcn_resnet50": torch.optim.Adam,
+    "fcn_resnet101": torch.optim.Adam,
+    "deeplabv3_resnet50": torch.optim.Adam,
+    "deeplabv3_resnet101": torch.optim.Adam
+}
+optimizer_options = {
+    "fcn_resnet50": base_adam_options,
+    "fcn_resnet101": base_adam_options,
+    "deeplabv3_resnet50": base_adam_options,
+    "deeplabv3_resnet101": base_adam_options
+}
+
 
 class VisionBaseline(pl.LightningModule):
     def __init__(self, model, model_opts, loss, optimizer, opt_opts, epochs):
@@ -63,8 +86,8 @@ class VisionBaseline(pl.LightningModule):
         self.IoU = IoU
         self.curr_epoch = 0
         self.curr_fold = 0
-        self.val_iou = np.zeros((epochs+2))
-        self.val_f1 = np.zeros((epochs+2))
+        self.val_iou = np.zeros((epochs + 2))
+        self.val_f1 = np.zeros((epochs + 2))
 
     def forward(self, x):
         out = self.model(x)
@@ -78,10 +101,7 @@ class VisionBaseline(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        return {
-            'optimizer': self.optimizer,
-            'monitor': 'training loss'
-        }
+        return {'optimizer': self.optimizer, 'monitor': 'training loss'}
 
     def test_step(self, batch, batch_idx):
         x, y = batch
@@ -95,7 +115,8 @@ class VisionBaseline(pl.LightningModule):
         IoU = np.array(self.testIoU).mean()
         f = np.array(self.testF1).mean()
         logs = {'IoU': IoU, 'results': (IoU, f)}
-        print("len:", len(self.testIoU), "curr_epoch: ", self.curr_epoch,"IoU", IoU, "f", f)
+        print("len:", len(self.testIoU), "curr_epoch: ", self.curr_epoch,
+              "IoU", IoU, "f", f)
         self.testF1 = []
         self.testIoU = []
         self.val_f1[self.curr_epoch] = f
@@ -110,11 +131,12 @@ class VisionBaseline(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         self.test_epoch_end(outputs)
 
+
 class VisionBaselineSet(VisionBaseline):
-    def __init__(self, model, model_opts, loss, optimizer, opt_opts, epochs, train_idx, test_idx, train_res, augment):
+    def __init__(self, model, model_opts, loss, optimizer, opt_opts, epochs,
+                 train_idx, test_idx, train_res, augment):
         super().__init__(model, model_opts, loss, optimizer, opt_opts, epochs)
         self.train_idx = train_idx
         self.test_idx = test_idx
         self.train_res = train_res
         self.augment = augment
-

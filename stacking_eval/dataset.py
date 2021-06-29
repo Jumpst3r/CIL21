@@ -1,14 +1,13 @@
-from PIL import Image
-import albumentations as A
-from albumentations.pytorch.transforms import ToTensorV2
-from torch.utils.data import Dataset
-import torch
-import matplotlib.pyplot as plt
 import glob
-from tqdm import tqdm
-import numpy as np
+
 import albumentations as A
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
 from albumentations.pytorch.transforms import ToTensorV2
+from PIL import Image
+from torch.utils.data import Dataset
+from tqdm import tqdm
 
 
 class ArealDataset(Dataset):
@@ -24,8 +23,11 @@ class ArealDataset(Dataset):
     target_size: Resize target, default is (608,608): tuple
     visualize: Plot the images generated
     """
-
-    def __init__(self, root_dir_images: str, root_dir_gt: str, target_size=(100, 100), visualize=False):
+    def __init__(self,
+                 root_dir_images: str,
+                 root_dir_gt: str,
+                 target_size=(100, 100),
+                 visualize=False):
         impaths = sorted(glob.glob(root_dir_images + '*.png'))
         gtpaths = sorted(glob.glob(root_dir_gt + '*.png'))
         self.images = impaths

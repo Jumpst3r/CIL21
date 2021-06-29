@@ -51,7 +51,7 @@ The refinement evaluation experiments (table ??) can be repoduced with the follo
 ### UNet
 #### 1 block
 ```
-bsub -W 4:00 -o c_1 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 1 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_1 --max_epochs 150 --res 12
+bsub -W 4:00 -o c_1 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 1 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_1 --max_epochs 150 --res 128
 ```
 
 #### hourglass stacking

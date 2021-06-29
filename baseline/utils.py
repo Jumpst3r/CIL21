@@ -1,9 +1,8 @@
-import torch
-import torch.nn.functional as F
-import torch.nn as nn
 import numpy as np
-from torch.autograd import Function
-from torch.autograd import Variable
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.autograd import Function, Variable
 
 
 def F1(inputs, targets):
@@ -39,7 +38,8 @@ class DiceBCELoss(nn.Module):
         targets = targets.view(-1)
 
         intersection = (inputs * targets).sum()
-        dice_loss = 1 - (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
+        dice_loss = 1 - (2. * intersection + smooth) / (inputs.sum() +
+                                                        targets.sum() + smooth)
         BCE = F.binary_cross_entropy(inputs, targets, reduction='mean')
         Dice_BCE = BCE + dice_loss
 
@@ -82,9 +82,11 @@ class FocalLoss(nn.Module):
         targets = targets.reshape(-1)
 
         # first compute binary cross-entropy
-        BCE = F.binary_cross_entropy_with_logits(inputs, targets, reduction='mean')
+        BCE = F.binary_cross_entropy_with_logits(inputs,
+                                                 targets,
+                                                 reduction='mean')
         BCE_EXP = torch.exp(-BCE)
-        focal_loss = alpha * (1 - BCE_EXP) ** gamma * BCE
+        focal_loss = alpha * (1 - BCE_EXP)**gamma * BCE
 
         return focal_loss
 
@@ -103,10 +105,13 @@ class ComboLoss(nn.Module):
 
         # True Positives, False Positives & False Negatives
         intersection = (inputs * targets).sum()
-        dice = (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
+        dice = (2. * intersection + smooth) / (inputs.sum() + targets.sum() +
+                                               smooth)
 
         inputs = torch.clamp(inputs, eps, 1.0 - eps)
-        out = - (ALPHA * ((targets * torch.log(inputs)) + ((1 - ALPHA) * (1.0 - targets) * torch.log(1.0 - inputs))))
+        out = -(ALPHA * ((targets * torch.log(inputs)) +
+                         ((1 - ALPHA) *
+                          (1.0 - targets) * torch.log(1.0 - inputs))))
         weighted_ce = out.mean(-1)
         combo = (CE_RATIO * weighted_ce) - ((1 - CE_RATIO) * dice)
 
@@ -131,6 +136,6 @@ class FocalTverskyLoss(nn.Module):
         FN = (targets * (1 - inputs)).sum()
 
         Tversky = (TP + smooth) / (TP + alpha * FP + beta * FN + smooth)
-        FocalTversky = (1 - Tversky) ** gamma
+        FocalTversky = (1 - Tversky)**gamma
 
         return FocalTversky

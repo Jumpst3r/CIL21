@@ -1,22 +1,26 @@
-import torch
-import pytorch_lightning as pl
-from torch.utils.data import DataLoader
 import numpy as np
+import pytorch_lightning as pl
+import torch
 from pytorch_lightning.callbacks import ModelCheckpoint
-from models.unet import StackedUNet
+from torch.utils.data import DataLoader
+
 from dataset import ArealDataset
+from models.unet import StackedUNet
+
 pl.seed_everything(2)
-from sklearn.model_selection import KFold
 import gc
 from pprint import pprint
-from config import args
 
+from sklearn.model_selection import KFold
+
+from config import args
 
 if __name__ == '__main__':
 
     pprint(vars(args))
 
-    dataset = ArealDataset(root_dir_images='training/training/images/', root_dir_gt='training/training/groundtruth/',
+    dataset = ArealDataset(root_dir_images='training/training/images/',
+                           root_dir_gt='training/training/groundtruth/',
                            target_size=(args.res, args.res))
     kf = KFold(n_splits=4)
     val_IoU = []
@@ -26,13 +30,26 @@ if __name__ == '__main__':
     for train_indices, test_indices in kf.split(dataset):
         train_dataset = torch.utils.data.dataset.Subset(dataset, train_indices)
         test_dataset = torch.utils.data.dataset.Subset(dataset, test_indices)
-        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, pin_memory=True, num_workers=8)
-        test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, pin_memory=True, num_workers=8)
+        train_dataloader = DataLoader(train_dataset,
+                                      batch_size=args.batch_size,
+                                      pin_memory=True,
+                                      num_workers=8)
+        test_dataloader = DataLoader(test_dataset,
+                                     batch_size=args.batch_size,
+                                     pin_memory=True,
+                                     num_workers=8)
 
-        model = StackedUNet(lr=args.lr, nb_blocks=args.nb_blocks, unet_mode=args.unet_mode,
-                            stacking_mode=args.stacking_mode, loss_mode=args.loss_mode)
-        trainer = pl.Trainer(max_epochs=args.max_epochs, gpus=1, stochastic_weight_avg=True, precision=16,
-                             deterministic=True, checkpoint_callback=False)
+        model = StackedUNet(lr=args.lr,
+                            nb_blocks=args.nb_blocks,
+                            unet_mode=args.unet_mode,
+                            stacking_mode=args.stacking_mode,
+                            loss_mode=args.loss_mode)
+        trainer = pl.Trainer(max_epochs=args.max_epochs,
+                             gpus=1,
+                             stochastic_weight_avg=True,
+                             precision=16,
+                             deterministic=True,
+                             checkpoint_callback=False)
 
         train_dataset.dataset.applyTransforms = True
         trainer.fit(model, train_dataloader)
@@ -63,9 +80,19 @@ if __name__ == '__main__':
     if args.ckpt_dir != '':
         # train on full dataset to get kaggle score:
         checkpoint_callback = ModelCheckpoint(dirpath=args.ckpt_dir)
-        train_dataloader = DataLoader(dataset, batch_size=args.batch_size, pin_memory=False, num_workers=8)
-        model = StackedUNet(lr=args.lr, nb_blocks=args.nb_blocks, unet_mode=args.unet_mode,
-                            stacking_mode=args.stacking_mode, loss_mode=args.loss_mode)
-        trainer = pl.Trainer(max_epochs=args.max_epochs, gpus=1, stochastic_weight_avg=True, precision=16,
-                             deterministic=True, checkpoint_callback=checkpoint_callback)
+        train_dataloader = DataLoader(dataset,
+                                      batch_size=args.batch_size,
+                                      pin_memory=False,
+                                      num_workers=8)
+        model = StackedUNet(lr=args.lr,
+                            nb_blocks=args.nb_blocks,
+                            unet_mode=args.unet_mode,
+                            stacking_mode=args.stacking_mode,
+                            loss_mode=args.loss_mode)
+        trainer = pl.Trainer(max_epochs=args.max_epochs,
+                             gpus=1,
+                             stochastic_weight_avg=True,
+                             precision=16,
+                             deterministic=True,
+                             checkpoint_callback=checkpoint_callback)
         trainer.fit(model, train_dataloader)
