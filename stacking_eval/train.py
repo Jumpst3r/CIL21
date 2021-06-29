@@ -26,18 +26,20 @@ if __name__ == '__main__':
     for train_indices, test_indices in kf.split(dataset):
         train_dataset = torch.utils.data.dataset.Subset(dataset, train_indices)
         test_dataset = torch.utils.data.dataset.Subset(dataset, test_indices)
-        test_dataset.applyTransforms = False
         train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, pin_memory=True, num_workers=8)
         test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, pin_memory=True, num_workers=8)
 
         model = StackedUNet(lr=args.lr, nb_blocks=args.nb_blocks, unet_mode=args.unet_mode,
                             stacking_mode=args.stacking_mode, loss_mode=args.loss_mode)
-
         trainer = pl.Trainer(max_epochs=args.max_epochs, gpus=1, stochastic_weight_avg=True, precision=16,
                              deterministic=True, checkpoint_callback=False)
+
+        train_dataset.dataset.applyTransforms = True
         trainer.fit(model, train_dataloader)
 
+        train_dataset.dataset.applyTransforms = False
         results = trainer.test(model, test_dataloader, verbose=False)[0]
+
         val_IoU.append(results['results'][0])
         val_F1.append(results['results'][1])
         val_acc.append(results['results'][2])

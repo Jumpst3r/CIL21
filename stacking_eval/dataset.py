@@ -25,8 +25,7 @@ class ArealDataset(Dataset):
     visualize: Plot the images generated
     """
 
-    def __init__(self, root_dir_images: str, root_dir_gt: str, target_size=(100, 100), visualize=False,
-                 applyTransforms=True):
+    def __init__(self, root_dir_images: str, root_dir_gt: str, target_size=(100, 100), visualize=False):
         impaths = sorted(glob.glob(root_dir_images + '*.png'))
         gtpaths = sorted(glob.glob(root_dir_gt + '*.png'))
         self.images = impaths
@@ -46,23 +45,21 @@ class ArealDataset(Dataset):
             means = list(np.array(means).sum(axis=0) / count)
             stds = list(np.array(stds).sum(axis=0) / count)
         print(means, stds)
-        if applyTransforms:
-            self.transform = A.Compose([
-                A.Resize(target_size[0], target_size[1]),
-                A.ColorJitter(),
-                A.RandomRotate90(),
-                A.VerticalFlip(),
-                A.HorizontalFlip(),
-                A.Transpose(),
-                A.Normalize(mean=means, std=stds),
-                ToTensorV2(transpose_mask=True)
-            ])
-        else:
-            self.transform = A.Compose([
-                A.Resize(target_size[0], target_size[1]),
-                A.Normalize(mean=means, std=stds),
-                ToTensorV2(transpose_mask=True)
-            ])
+        self.transform_train = A.Compose([
+            A.Resize(target_size[0], target_size[1]),
+            A.ColorJitter(),
+            A.RandomRotate90(),
+            A.VerticalFlip(),
+            A.HorizontalFlip(),
+            A.Transpose(),
+            A.Normalize(mean=means, std=stds),
+            ToTensorV2(transpose_mask=True)
+        ])
+        self.transform_test = A.Compose([
+            A.Resize(target_size[0], target_size[1]),
+            A.Normalize(mean=means, std=stds),
+            ToTensorV2(transpose_mask=True)
+        ])
 
     def __len__(self):
         return len(self.images)
@@ -70,13 +67,17 @@ class ArealDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-
         impath = self.images[idx]
         gtpath = self.gt[idx]
         image = np.array(Image.open(impath))
         gt = np.array(Image.open(gtpath))
         gt = np.array(gt > 100, dtype=np.float32)
-        tf = self.transform(image=image, mask=gt)
+        if self.applyTransforms:
+            print(self.transform_train)
+            tf = self.transform_train(image=image, mask=gt)
+        else:
+            print(self.transform_test)
+            tf = self.transform_test(image=image, mask=gt)
         im = tf['image']
         gt = tf['mask']
         if self.visualize:
