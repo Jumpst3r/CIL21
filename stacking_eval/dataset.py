@@ -73,10 +73,8 @@ class ArealDataset(Dataset):
         gt = np.array(Image.open(gtpath))
         gt = np.array(gt > 100, dtype=np.float32)
         if self.applyTransforms:
-            print(self.transform_train)
             tf = self.transform_train(image=image, mask=gt)
         else:
-            print(self.transform_test)
             tf = self.transform_test(image=image, mask=gt)
         im = tf['image']
         gt = tf['mask']
