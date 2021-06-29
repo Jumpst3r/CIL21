@@ -95,4 +95,5 @@ if __name__ == '__main__':
                              precision=16,
                              deterministic=True,
                              checkpoint_callback=checkpoint_callback)
+        dataset.applyTransforms = True
         trainer.fit(model, train_dataloader)
