@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
 
     train_dataloader = DataLoader(train, batch_size=10, num_workers=8)
-    val_dataloader =  DataLoader(val, batch_size=5, num_workers=8)
+    val_dataloader =  DataLoader(val, batch_size=30, num_workers=8)
     
     # for x,y in train_dataloader: vizualize(x,y)
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     model = StackedUNet()
     
     trainer = pl.Trainer(max_epochs=5000, gpus=1, stochastic_weight_avg=True, precision=16,
-                         checkpoint_callback=checkpoint_callback)
+                         checkpoint_callback=checkpoint_callback, resume_from_checkpoint='weights-v5.ckpt', check_val_every_n_epoch=5)
 
     trainer.fit(model, train_dataloader, val_dataloader)
        

@@ -36,8 +36,8 @@ if __name__ == '__main__':
     dataset = ArealDataset(root_dir_images='training/images/',
                            root_dir_gt='training/groundtruth/',
                            target_size=(128, 128))
-    cross_val = 4
-    kf = KFold(n_splits=cross_val)
+    cross_val = 2
+    kf = KFold(n_splits=cross_val, shuffle=True)
 
     epochs = 100
 

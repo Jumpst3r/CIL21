@@ -1,41 +1,7 @@
-# Baseline I
-## This branch implements a simple first baseline:
+# Training data
 
-### How
-We generate a training set by cutting out 20x20 patches from the provided images and labelling them wither as roads (1) or non-roads (0).
+To get the final kaggle score, we extended the dataset to include cropped images from the deepglobe dataset. Due to the large file size, we decided to not directly include it here. To retrain submission models, you can download the extended dataset from 
 
-This behavior is implemented in the file [`feature_extractor.py`](feature_extractor.py)
+https://polybox.ethz.ch/index.php/s/N4WJnzCGp3BGZlK
 
-We then load this data and train a very simple CNN (4 convolutional layers, 2 fully connected layers) on the generated patches.
-This behavior is implemented in the file [`baseline_training.py`](baseline_training.py), which also saves the trained model weights as a `.ckpt` file
-
-We use the F1 metric to asses the quality of our model during training on the validation set, implemented in [`f1_score.py`](f1_score.py).
-
-Finally the file [`predict.py`](predict.py) can be used to vizualize the predictions on the test data.
-
-### Downsides
-
-As this is supposed to be a simple baseline, here are a few obvious downsides:
-
-- Classification is on a 20x20 patch level, very coarse
-- No context, neighbouring patches do not change current patch predictions
-
-### How to play with this baseline:
-
-Clone the branch: `git clone --branch baseline-I git@github.com:Jumpst3r/CIL21.git`
-
-Create & activate a new python environment: `virtualenv env && source ./env/bin/activate`
-
-Install required packages : `pip install -r requirements.txt`
-
-To used previously trained model & visualize predictions: `python3 predict.py` (make sure to use the latest weights file)
-
-### To retrain the network
-
-Create a `patches` directory: `mkdir patches`
-
-Run the patch generation script: `python3 feature_extractor.py`
-
-Run the training script: `python3 baseline_training.py`
-
-Visualize predictions: `python3 predict.py` (make sure to use the latest weights file)
+And extract it to mimic the directory structure of the other subfolders of this project.

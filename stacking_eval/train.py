@@ -22,7 +22,7 @@ if __name__ == '__main__':
     dataset = ArealDataset(root_dir_images='training/training/images/',
                            root_dir_gt='training/training/groundtruth/',
                            target_size=(args.res, args.res))
-    kf = KFold(n_splits=4)
+    kf = KFold(n_splits=2, shuffle=True)
     val_IoU = []
     val_F1 = []
     val_acc = []
