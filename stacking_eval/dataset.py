@@ -48,6 +48,7 @@ class ArealDataset(Dataset):
             stds = list(np.array(stds).sum(axis=0) / count)
         print(means, stds)
         self.transform_train = A.Compose([
+            A.RandomResizedCrop(height=target_size[0], width=target_size[1], scale=(0.5, 1.0), ratio=(1.0, 1.0)),
             A.Resize(target_size[0], target_size[1]),
             A.ColorJitter(),
             A.RandomRotate90(),
