@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from dataset import ArealDataset
 from models.unet import StackedUNet
 
-pl.seed_everything(2)
+pl.seed_everything(42)
 torch.backends.cudnn.benchmark = False
 torch.use_deterministic_algorithms(True)
 
