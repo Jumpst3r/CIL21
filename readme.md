@@ -51,21 +51,21 @@ The refinement evaluation experiments (table ??) can be repoduced with the follo
 ### UNet
 #### 1 block
 ```
-bsub -W 4:00 -o c_1 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 1 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_1 --max_epochs 150 --res 128
+bsub -W 4:00 -o c_1 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 1 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_1 --max_epochs 300 --res 128
 ```
 
 #### hourglass stacking
 ```
-bsub -W 4:00 -o c_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_2 --max_epochs 150 --res 128
-bsub -W 4:00 -o c_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_4 --max_epochs 150 --res 128
-bsub -W 4:00 -o c_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_6 --max_epochs 150 --res 128
+bsub -W 4:00 -o c_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_2 --max_epochs 300 --res 128
+bsub -W 4:00 -o c_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_4 --max_epochs 300 --res 128
+bsub -W 4:00 -o c_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_6 --max_epochs 300 --res 128
 ```
 
 #### simple stacking
 ```
-bsub -W 4:00 -o c_s_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_2 --max_epochs 150 --res 128
-bsub -W 4:00 -o c_s_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_4 --max_epochs 150 --res 128
-bsub -W 4:00 -o c_s_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_6 --max_epochs 150 --res 128
+bsub -W 4:00 -o c_s_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_2 --max_epochs 300 --res 128
+bsub -W 4:00 -o c_s_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_4 --max_epochs 300 --res 128
+bsub -W 4:00 -o c_s_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_6 --max_epochs 300 --res 128
 ```
 
 ### UNet-ResNet

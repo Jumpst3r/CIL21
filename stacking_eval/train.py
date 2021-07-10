@@ -8,6 +8,9 @@ from dataset import ArealDataset
 from models.unet import StackedUNet
 
 pl.seed_everything(2)
+torch.backends.cudnn.benchmark = False
+torch.use_deterministic_algorithms(True)
+
 import gc
 from pprint import pprint
 
@@ -33,11 +36,11 @@ if __name__ == '__main__':
         train_dataloader = DataLoader(train_dataset,
                                       batch_size=args.batch_size,
                                       pin_memory=True,
-                                      num_workers=8)
+                                      num_workers=1)
         test_dataloader = DataLoader(test_dataset,
                                      batch_size=args.batch_size,
                                      pin_memory=True,
-                                     num_workers=8)
+                                     num_workers=1)
 
         model = StackedUNet(lr=args.lr,
                             nb_blocks=args.nb_blocks,

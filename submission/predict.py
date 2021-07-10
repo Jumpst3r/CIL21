@@ -27,8 +27,8 @@ with torch.no_grad():
     # model = StackedUNet.load_from_checkpoint('weights.ckpt').eval().cuda()
     # model = EnsemblePredictor(['weights/weights.ckpt','weights/weights-v1.ckpt' ,'weights/weights-v2.ckpt' ,'weights/weights-v3.ckpt', 'weights/weights-v4.ckpt'], StackedUNet).eval()
     model = EnsemblePredictor([
-        'weights.ckpt', 'weights-v1.ckpt', 'weights-v2.ckpt',
-        'weights-v3.ckpt', 'weights-v4.ckpt'
+        'weights-v3.ckpt', 'weights-v4.ckpt', 'weights-v5.ckpt',
+        'weights-v6.ckpt', 'weights-v7.ckpt'
     ], StackedUNet).eval()
 
     # Iterate through a bunch of pictures in the test set
@@ -40,7 +40,7 @@ with torch.no_grad():
     cnt = 0
 
     # The input size on which your model was trained
-    SIZE = 192
+    SIZE = 480
 
     means, stds = getnormvals()
 

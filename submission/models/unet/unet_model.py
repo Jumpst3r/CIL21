@@ -11,7 +11,7 @@ from .utils import F1, IoU, accuracy
 class StackedUNet(pl.LightningModule):
     def __init__(self,
                  lr=1e-4,
-                 nb_blocks=6,
+                 nb_blocks=4,
                  unet_mode='classic-backbone',
                  stacking_mode='hourglass',
                  loss_mode='sum'):

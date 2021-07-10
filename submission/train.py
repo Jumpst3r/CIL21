@@ -27,7 +27,7 @@ pl.seed_everything(2)
 
 if __name__ == '__main__':
 
-    dataset = ArealDataset(root_dir_images='training/images/',root_dir_gt='training/groundtruth/', target_size=(128,128))
+    dataset = ArealDataset(root_dir_images='training/images/',root_dir_gt='training/groundtruth/', target_size=(320,320))
     
     num_samples_total = len(dataset)
     num_train = int(0.7 * num_samples_total)
@@ -35,8 +35,8 @@ if __name__ == '__main__':
     train, val = random_split(dataset, [num_train, num_val])
 
 
-    train_dataloader = DataLoader(train, batch_size=10, num_workers=8)
-    val_dataloader =  DataLoader(val, batch_size=30, num_workers=8)
+    train_dataloader = DataLoader(train, batch_size=3, num_workers=8)
+    val_dataloader =  DataLoader(val, batch_size=3, num_workers=8)
     
     # for x,y in train_dataloader: vizualize(x,y)
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     model = StackedUNet()
     
     trainer = pl.Trainer(max_epochs=5000, gpus=1, stochastic_weight_avg=True, precision=16,
-                         checkpoint_callback=checkpoint_callback, resume_from_checkpoint='weights-v5.ckpt', check_val_every_n_epoch=5)
+                         checkpoint_callback=checkpoint_callback, check_val_every_n_epoch=5, resume_from_checkpoint='weights-v4.ckpt')
 
     trainer.fit(model, train_dataloader, val_dataloader)
        
