@@ -51,45 +51,41 @@ The refinement evaluation experiments (table ??) can be repoduced with the follo
 ### UNet
 #### 1 block
 ```
-bsub -W 4:00 -o c_1 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 1 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_1 --max_epochs 300 --res 128
+bsub -W 4:00 -o unet_1 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train.py --nb_blocks 1 --unet_mode classic --stacking_mode hourglass --loss_mode sum --max_epochs 300 --res 128
 ```
 
 #### hourglass stacking
 ```
-bsub -W 4:00 -o c_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_2 --max_epochs 300 --res 128
-bsub -W 4:00 -o c_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_4 --max_epochs 300 --res 128
-bsub -W 4:00 -o c_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic --stacking_mode hourglass --loss_mode sum --ckpt_dir c_6 --max_epochs 300 --res 128
+bsub -W 4:00 -o unet_hg_2 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train.py --nb_blocks 2 --unet_mode classic --stacking_mode hourglass --loss_mode sum --max_epochs 300 --res 128
+bsub -W 4:00 -o unet_hg_4 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train.py --nb_blocks 4 --unet_mode classic --stacking_mode hourglass --loss_mode sum --max_epochs 300 --res 128
 ```
 
 #### simple stacking
 ```
-bsub -W 4:00 -o c_s_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_2 --max_epochs 300 --res 128
-bsub -W 4:00 -o c_s_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_4 --max_epochs 300 --res 128
-bsub -W 4:00 -o c_s_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic --stacking_mode simple --loss_mode sum --ckpt_dir c_s_6 --max_epochs 300 --res 128
+bsub -W 4:00 -o unet_simple_2 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train.py --nb_blocks 2 --unet_mode classic --stacking_mode simple --loss_mode sum --max_epochs 300 --res 128
+bsub -W 4:00 -o unet_simple_4 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train.py --nb_blocks 4 --unet_mode classic --stacking_mode simple --loss_mode sum --max_epochs 300 --res 128
 ```
 
 ### UNet-ResNet
 
 #### 1 block
 ```
-bsub -W 4:00 -o cb_1 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 1 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --ckpt_dir cb_1 --max_epochs 150 --res 128
+bsub -W 4:00 -o resunet_1 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train.py --nb_blocks 1 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --max_epochs 300 --res 128
 ```
 
 #### hourglass stacking
 ```
-bsub -W 4:00 -o cb_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --ckpt_dir cb_2 --max_epochs 300 --res 128
-bsub -W 4:00 -o cb_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --ckpt_dir cb_4 --max_epochs 300 --res 128
-bsub -W 4:00 -o cb_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --ckpt_dir cb_6 --max_epochs 300 --res 128
+bsub -W 4:00 -o resunet_hg_2 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train.py --nb_blocks 2 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --max_epochs 300 --res 128
+bsub -W 4:00 -o resunet_hg_4 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train.py --nb_blocks 4 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --max_epochs 300 --res 128
 ```
 
 #### simple stacking
 ```
-bsub -W 4:00 -o cb_s_2 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 2 --unet_mode classic-backbone --stacking_mode simple --loss_mode sum --ckpt_dir cb_s_2 --max_epochs 300 --res 128
-bsub -W 4:00 -o cb_s_4 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 4 --unet_mode classic-backbone --stacking_mode simple --loss_mode sum --ckpt_dir cb_s_4 --max_epochs 300 --res 128
-bsub -W 4:00 -o cb_s_6 -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic-backbone --stacking_mode simple --loss_mode sum --ckpt_dir cb_s_6 --max_epochs 300 --res 128
+bsub -W 4:00 -o resunet_simple_2 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train.py --nb_blocks 2 --unet_mode classic-backbone --stacking_mode simple --loss_mode sum --max_epochs 300 --res 128
+bsub -W 4:00 -o resunet_simple_4 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train.py --nb_blocks 4 --unet_mode classic-backbone --stacking_mode simple --loss_mode sum --max_epochs 300 --res 128
 ```
 
 ### UNet-ResNet, with a single loss at the end
 ```
-bsub -W 4:00 -o cb_6_last -R "rusage[ngpus_excl_p=1,mem=8096]" python train.py --nb_blocks 6 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode last --ckpt_dir cb_6_last --max_epochs 300 --res 128
+TODO
 ```
