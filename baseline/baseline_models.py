@@ -88,7 +88,7 @@ class VisionBaseline(pl.LightningModule):
         f = np.array(self.testF1).mean()
         acc = np.array(self.testAcc).mean()
         logs = {'IoU': IoUs, 'results': (IoUs, f, acc)}
-        return {'results': (IoUs, f), 'F1': f, 'progress_bar': logs}
+        return {'results': (IoUs, f, acc), 'F1': f, 'progress_bar': logs}
 
 
 class VisionBaselineSet(VisionBaseline):
