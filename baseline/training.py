@@ -73,11 +73,12 @@ if __name__ == '__main__':
                 dataset, train_indices)
             test_dataset = torch.utils.data.dataset.Subset(
                 dataset, test_indices)
-            test_dataset.applyTransforms = False
+            train_dataset.dataset.applyTransforms = True
             train_dataloader = DataLoader(train_dataset,
                                           batch_size=5,
                                           pin_memory=True,
                                           num_workers=8)
+            test_dataset.dataset.applyTransforms = True
             test_dataloader = DataLoader(test_dataset,
                                          batch_size=5,
                                          pin_memory=True,
@@ -90,12 +91,12 @@ if __name__ == '__main__':
             start = time.time()
             trainer.fit(model, train_dataloader, test_dataloader)
             end = time.time()
-            print("fold: ", fold, " time: ", end - start, "s iou: ",
-                  model.val_iou, " f1: ", model.val_f1)
+
 
             #0th entry is sanity check, drop that
             iou[fold, :] = model.val_iou[1:-1]
             f1[fold, :] = model.val_f1[1:-1]
+            acc[fold, :] = model.val_acc[1:-1]
 
             fold += 1
             del model

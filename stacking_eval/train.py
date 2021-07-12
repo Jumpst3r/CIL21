@@ -57,7 +57,7 @@ if __name__ == '__main__':
         train_dataset.dataset.applyTransforms = True
         trainer.fit(model, train_dataloader)
 
-        train_dataset.dataset.applyTransforms = False
+        test_dataset.dataset.applyTransforms = False
         results = trainer.test(model, test_dataloader, verbose=False)[0]
 
         val_IoU.append(results['results'][0])
