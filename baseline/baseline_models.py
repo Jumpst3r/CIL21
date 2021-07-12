@@ -1,39 +1,8 @@
-"""
-Torchvision Models semantinc segmentation:
-    - FCN ResNet50
-    - FCN ResNet101
-    - DeepLabV3 ResNet50
-    - DeepLabV3 ResNet101
-    - DeepLabV3 MobileNetV3
-    - Lite R-ASPP MobileNetV3
- 
-Dataset:
-    - Kaggle training set
-    - Kaggle test set
-
-performance measure function
-    - IoU
-
-Evaluation method:
-    - 4 fold Cross-validation, mean of performance
-    - full training set, Kaggle submission performance
-
-
-
-import torch
-from PIL import Image
-import matplotlib.pyplot as plt
-from torch.utils.data import Dataset, DataLoader
-from kaggle_dataset import KaggleSet
-from sklearn.model_selection import KFold
-"""
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, random_split
-from torchvision import datasets, models, transforms, utils
 from torchvision.models.segmentation import (deeplabv3_resnet50,
                                              deeplabv3_resnet101, fcn_resnet50,
                                              fcn_resnet101)
@@ -88,9 +57,7 @@ class VisionBaseline(pl.LightningModule):
         self.acc = accuracy
         self.curr_epoch = 0
         self.curr_fold = 0
-        self.val_iou = np.zeros((epochs + 2))
-        self.val_f1 = np.zeros((epochs + 2))
-        self.val_acc = np.zeros((epochs + 2))
+
 
     def forward(self, x):
         out = self.model(x)
@@ -117,26 +84,11 @@ class VisionBaseline(pl.LightningModule):
         self.testAcc.append(acc.detach().cpu().item())
 
     def test_epoch_end(self, outputs):
-        IoU = np.array(self.testIoU).mean()
+        IoUs = np.array(self.testIoU).mean()
         f = np.array(self.testF1).mean()
         acc = np.array(self.testAcc).mean()
-        logs = {'IoU': IoU, 'results': (IoU, f, acc)}
-        self.testF1 = []
-        self.testIoU = []
-        self.testAcc = []
-        self.val_f1[self.curr_epoch] = f
-        self.val_iou[self.curr_epoch] = IoU
-        self.val_acc[self.curr_epoch] = acc
-
-        self.curr_epoch += 1
-        out = {'results': (IoU, f), 'F1': f, 'progress_bar': logs}
-        return out
-
-    def validation_step(self, batch, batch_idx):
-        self.test_step(batch, batch_idx)
-
-    def validation_epoch_end(self, outputs):
-        self.test_epoch_end(outputs)
+        logs = {'IoU': IoUs, 'results': (IoUs, f, acc)}
+        return {'results': (IoUs, f), 'F1': f, 'progress_bar': logs}
 
 
 class VisionBaselineSet(VisionBaseline):

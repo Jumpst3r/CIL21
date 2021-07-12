@@ -65,9 +65,9 @@ if __name__ == '__main__':
     def eval(key):
         print("training: ", key)
         fold = 0
-        iou = np.zeros((cross_val, epochs))
-        f1 = np.zeros((cross_val, epochs))
-        acc = np.zeros((cross_val, epochs))
+        val_IoU = []
+        val_F1 = []
+        val_acc = []
         for train_indices_plain, test_indices_plain in kf.split(dataset):
             train_indices = [idx[i] for i in train_indices_plain]
             test_indices = [idx[i] for i in test_indices_plain]
@@ -92,16 +92,14 @@ if __name__ == '__main__':
                                    epochs)
             trainer = get_trainer()
 
-            start = time.time()
             
-            trainer.fit(model, train_dataloader, test_dataloader)
-            end = time.time()
+            trainer.fit(model, train_dataloader)
+            results = trainer.test(model, test_dataloader, verbose=False)[0]
+            val_IoU.append(results['results'][0])
+            val_F1.append(results['results'][1])
+            val_acc.append(results['results'][2])
+            
 
-
-            #0th entry is sanity check, drop that
-            iou[fold, :] = model.val_iou[1:-1]
-            f1[fold, :] = model.val_f1[1:-1]
-            acc[fold, :] = model.val_acc[1:-1]
 
             fold += 1
             del model
@@ -113,10 +111,14 @@ if __name__ == '__main__':
             gc.collect()
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
+                
+        val_IoU = np.array(val_IoU)
+        val_F1 = np.array(val_F1)
+        val_acc = np.array(val_acc)
 
-        print('IoU: ', iou.mean(), iou.std())
-        print('f1: ', f1.mean(), f1.std())
-        print('acc: ', acc.mean(), acc.std())
+        print('IoU: ', val_IoU.mean(), val_IoU.std())
+        print('f1: ', val_F1.mean(), val_F1.std())
+        print('acc: ', val_acc.mean(), val_acc.std())
 
     def train(key):
         print("training for kaggle eval: ", key)
