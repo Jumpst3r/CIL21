@@ -38,7 +38,7 @@ from torchvision.models.segmentation import (deeplabv3_resnet50,
                                              deeplabv3_resnet101, fcn_resnet50,
                                              fcn_resnet101)
 
-from utils import F1, DiceBCELoss, FocalLoss, IoU, IoULoss
+from utils import F1, IoU, accuracy
 
 base_model_options = dict(pretrained=False, progress=True, num_classes=1)
 base_adam_options = dict(lr=1e-4, weight_decay=1e-5)
@@ -83,11 +83,14 @@ class VisionBaseline(pl.LightningModule):
         self.optimizer = optimizer(**opts)
         self.testIoU = []
         self.testF1 = []
+        self.testAcc = []
         self.IoU = IoU
+        self.acc = accuracy
         self.curr_epoch = 0
         self.curr_fold = 0
         self.val_iou = np.zeros((epochs + 2))
         self.val_f1 = np.zeros((epochs + 2))
+        self.val_acc = np.zeros((epochs + 2))
 
     def forward(self, x):
         out = self.model(x)
@@ -108,19 +111,22 @@ class VisionBaseline(pl.LightningModule):
         out = self.forward(x)
         iou = self.IoU(out, y)
         f = F1(out, y)
+        val_acc = self.acc(out, y)
         self.testIoU.append(iou.detach().cpu().item())
         self.testF1.append(f.detach().cpu().item())
+        self.testAcc.append(val_acc.detach().cpu().item())
 
     def test_epoch_end(self, outputs):
         IoU = np.array(self.testIoU).mean()
         f = np.array(self.testF1).mean()
-        logs = {'IoU': IoU, 'results': (IoU, f)}
-        print("len:", len(self.testIoU), "curr_epoch: ", self.curr_epoch,
-              "IoU", IoU, "f", f)
+        acc = np.array(self.testAcc).mean()
+        logs = {'IoU': IoU, 'results': (IoU, f, acc)}
         self.testF1 = []
         self.testIoU = []
         self.val_f1[self.curr_epoch] = f
         self.val_iou[self.curr_epoch] = IoU
+        self.val_acc[self.curr_epoch] = acc
+
         self.curr_epoch += 1
         out = {'results': (IoU, f), 'F1': f, 'progress_bar': logs}
         return out

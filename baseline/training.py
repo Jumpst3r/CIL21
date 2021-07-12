@@ -1,48 +1,38 @@
 import argparse
-import os
 import time
 
 import numpy as np
-import pytorch_lightning
 import pytorch_lightning as pl
-# from comet_ml import Experiment
 import torch
-import torch.nn.functional as F
-from PIL import Image, ImageOps
-from pytorch_lightning.callbacks import ModelCheckpoint
-#import matplotlib.pyplot as plt
-#from models.unet import StackedUNet
-# from models.unet.janikunet import StackedUNetPL
-#from tqdm import tqdm
-from pytorch_lightning.loggers import CometLogger
-from pytorch_lightning.metrics import functional as FM
-from torch import nn
-from torch.utils.data import DataLoader, Dataset, random_split
-from torchvision import transforms
-from torchvision.models.segmentation import (deeplabv3_resnet50,
-                                             deeplabv3_resnet101, fcn_resnet50,
-                                             fcn_resnet101)
+
+from torch.utils.data import DataLoader
+import getpass
+
 
 from baseline_models import *
 from dataset import ArealDataset
 
-pl.seed_everything(2)
+pl.seed_everything(42)
+torch.backends.cudnn.benchmark = False
+torch.use_deterministic_algorithms(True)
 
 import gc
 
 from sklearn.model_selection import KFold
 
 if __name__ == '__main__':
+    USERNAME = getpass.getuser()
     dataset = ArealDataset(root_dir_images='training/images/',
                            root_dir_gt='training/groundtruth/',
                            target_size=(128, 128))
     cross_val = 2
     kf = KFold(n_splits=cross_val, shuffle=True)
 
-    epochs = 100
+    epochs = 300
 
     val_IoU = []
     val_F1 = []
+    val_acc = []
 
     idx = np.random.permutation(np.arange(100))
 
@@ -75,6 +65,7 @@ if __name__ == '__main__':
         fold = 0
         iou = np.zeros((cross_val, epochs))
         f1 = np.zeros((cross_val, epochs))
+        acc = np.zeros((cross_val, epochs))
         for train_indices_plain, test_indices_plain in kf.split(dataset):
             train_indices = [idx[i] for i in train_indices_plain]
             test_indices = [idx[i] for i in test_indices_plain]
@@ -90,7 +81,7 @@ if __name__ == '__main__':
             test_dataloader = DataLoader(test_dataset,
                                          batch_size=5,
                                          pin_memory=True,
-                                         num_workers=8)
+                                         num_workers=1)
             model = VisionBaseline(seg_models[key], model_opts[key], loss[key],
                                    optimizer[key], optimizer_options[key],
                                    epochs)
@@ -117,8 +108,9 @@ if __name__ == '__main__':
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-        np.save(key + "_iou", iou)
-        np.save(key + "_f1", f1)
+        print('IoU: ', iou.mean(), iou.std())
+        print('f1: ', f1.mean(), f1.std())
+        print('acc: ', f1.mean(), f1.std())
 
     def train(key):
         print("training for kaggle eval: ", key)
@@ -136,8 +128,7 @@ if __name__ == '__main__':
         trainer.fit(model, train_dataloader)
         end = time.time()
         print("time elapsed: ", end - start, "s epochs: ", epochs)
-        #dct = model.state_dict()
-        folder = '/cluster/scratch/fdokic/CIL21/'
+        folder = f'/cluster/scratch/{USERNAME}/CIL21/'
         PATH = folder + key + "_trained.pt"
         torch.save(model.state_dict(), PATH)
 

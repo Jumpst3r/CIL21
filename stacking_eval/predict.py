@@ -1,25 +1,16 @@
 import glob
 import os
-
 import albumentations as A
-import cv2
-import matplotlib.pyplot as plt
 import numpy as np
-import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from albumentations.pytorch.transforms import ToTensorV2
-from PIL import Image, ImageOps
-from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.metrics import functional as FM
-from torch import nn
-from torch.utils.data import DataLoader, TensorDataset, random_split
-from torchvision import transforms
-# from post import crf
+from PIL import Image
+
 from tqdm import tqdm
 
 from dataset_exploration import getnormvals
-from models.unet import StackedUNet, UNet
+from models.unet import StackedUNet
 
 with torch.no_grad():
 
