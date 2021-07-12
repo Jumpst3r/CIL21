@@ -14,12 +14,6 @@ from dataset import ArealDataset
 
 pl.seed_everything(42)
 torch.backends.cudnn.benchmark = False
-# deterministic algorithms not supported for CUDA > 10.2
-try:
-    torch.use_deterministic_algorithms(True)
-except RuntimeError:
-    import os
-    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
 
 import gc
