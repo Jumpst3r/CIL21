@@ -1,11 +1,7 @@
-import albumentations as A
 import matplotlib.pyplot as plt
-import numpy as np
 import pytorch_lightning as pl
-import torch
 import torch.nn.functional as F
-from albumentations.augmentations.functional import rot90
-from albumentations.pytorch.transforms import ToTensorV2
+
 from torchvision import transforms
 
 '''
@@ -27,7 +23,6 @@ class EnsemblePredictor(pl.LightningModule):
         ]
 
     def forward(self, x):
-        factors = list(range(1, 5))
         predictions = []
         dumb = self.models[0](x)
         vertFlip =  transforms.RandomVerticalFlip(p=1)

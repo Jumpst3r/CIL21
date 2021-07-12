@@ -1,12 +1,11 @@
-# This file computes the per-chanel means and stds of the training data.
-
-import glob
-
-import numpy as np
-from PIL import Image
 '''
 This file can be used to gather statistics about the dataset (per channel means and stds)
 '''
+
+import glob
+import numpy as np
+from PIL import Image
+
 
 
 def getnormvals():

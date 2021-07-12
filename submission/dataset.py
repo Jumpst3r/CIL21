@@ -4,7 +4,6 @@ import albumentations as A
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from albumentations.augmentations.transforms import CLAHE, ColorJitter
 from albumentations.pytorch.transforms import ToTensorV2
 from PIL import Image
 from torch.utils.data import Dataset

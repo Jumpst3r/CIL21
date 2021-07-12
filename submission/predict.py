@@ -24,8 +24,6 @@ from models.unet import StackedUNet, UNet
 
 with torch.no_grad():
 
-    # model = StackedUNet.load_from_checkpoint('weights.ckpt').eval().cuda()
-    # model = EnsemblePredictor(['weights/weights.ckpt','weights/weights-v1.ckpt' ,'weights/weights-v2.ckpt' ,'weights/weights-v3.ckpt', 'weights/weights-v4.ckpt'], StackedUNet).eval()
     model = EnsemblePredictor([
         'weights-v3.ckpt', 'weights-v4.ckpt', 'weights-v5.ckpt',
         'weights-v6.ckpt', 'weights-v7.ckpt'
@@ -36,7 +34,6 @@ with torch.no_grad():
     os.makedirs('out', exist_ok=True)
 
     test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
-    # test_imgs = sorted(glob.glob('training/training/images/*.png'))
     cnt = 0
 
     # The input size on which your model was trained

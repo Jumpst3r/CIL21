@@ -19,7 +19,6 @@ def accuracy(inputs, targets):
 
 
 def IoU(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
-    # import pdb; pdb.set_trace()
     y_true = y_true.type(torch.int32)
     y_pred = torch.round(F.sigmoid(y_pred)).type(torch.int32)
     y_pred = (y_pred == 1)
