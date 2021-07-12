@@ -52,12 +52,14 @@ if __name__ == '__main__':
                               gpus=1,
                               deterministic=True,
                               progress_bar_refresh_rate=0,
-                              logger=False)  #
+                              logger=False,
+                              checkpoint_callback=False)  #
         else:
             return pl.Trainer(max_epochs=epochs,
                               deterministic=True,
                               progress_bar_refresh_rate=0,
-                              logger=False)
+                              logger=False,
+                              checkpoint_callback=False)
 
     #for key in seg_models.keys():
     def eval(key):
@@ -91,6 +93,7 @@ if __name__ == '__main__':
             trainer = get_trainer()
 
             start = time.time()
+            
             trainer.fit(model, train_dataloader, test_dataloader)
             end = time.time()
 

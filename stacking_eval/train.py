@@ -52,7 +52,9 @@ if __name__ == '__main__':
                              stochastic_weight_avg=True,
                              precision=16,
                              deterministic=True,
-                             checkpoint_callback=False)
+                             checkpoint_callback=False,
+                             progress_bar_refresh_rate=0,
+                             logger=False)
 
         train_dataset.dataset.applyTransforms = True
         trainer.fit(model, train_dataloader)
