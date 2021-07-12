@@ -111,10 +111,10 @@ class VisionBaseline(pl.LightningModule):
         out = self.forward(x)
         iou = self.IoU(out, y)
         f = F1(out, y)
-        val_acc = self.acc(out, y)
+        acc = self.acc(out, y)
         self.testIoU.append(iou.detach().cpu().item())
         self.testF1.append(f.detach().cpu().item())
-        self.testAcc.append(val_acc.detach().cpu().item())
+        self.testAcc.append(acc.detach().cpu().item())
 
     def test_epoch_end(self, outputs):
         IoU = np.array(self.testIoU).mean()
@@ -123,6 +123,7 @@ class VisionBaseline(pl.LightningModule):
         logs = {'IoU': IoU, 'results': (IoU, f, acc)}
         self.testF1 = []
         self.testIoU = []
+        self.testAcc = []
         self.val_f1[self.curr_epoch] = f
         self.val_iou[self.curr_epoch] = IoU
         self.val_acc[self.curr_epoch] = acc

@@ -78,11 +78,13 @@ if __name__ == '__main__':
                                           batch_size=5,
                                           pin_memory=True,
                                           num_workers=8)
-            test_dataset.dataset.applyTransforms = True
+            train_dataloader.dataset.applyTransforms = True
             test_dataloader = DataLoader(test_dataset,
                                          batch_size=5,
                                          pin_memory=True,
                                          num_workers=1)
+            test_dataloader.dataset.applyTransforms = False
+
             model = VisionBaseline(seg_models[key], model_opts[key], loss[key],
                                    optimizer[key], optimizer_options[key],
                                    epochs)
@@ -111,7 +113,7 @@ if __name__ == '__main__':
 
         print('IoU: ', iou.mean(), iou.std())
         print('f1: ', f1.mean(), f1.std())
-        print('acc: ', f1.mean(), f1.std())
+        print('acc: ', acc.mean(), acc.std())
 
     def train(key):
         print("training for kaggle eval: ", key)
