@@ -46,6 +46,7 @@ class ArealDataset(Dataset):
                 count += 1
             means = list(np.array(means).sum(axis=0) / count)
             stds = list(np.array(stds).sum(axis=0) / count)
+        # means, stds = list(np.load('means.npy')), list(np.load('stds.npy'))
         print(means, stds)
         self.transform_train = A.Compose([
             A.RandomResizedCrop(height=target_size[0], width=target_size[1], scale=(0.5, 1.0), ratio=(1.0, 1.0)),

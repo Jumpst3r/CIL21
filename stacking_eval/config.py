@@ -7,6 +7,11 @@ def parse_args_function():
 
     parser.add_argument("--lr", type=float, default=1e-4, help='Learning rate')
 
+    parser.add_argument("--seed",
+                        type=int,
+                        default=42,
+                        help='seed')
+
     parser.add_argument("--nb_blocks",
                         type=int,
                         default=4,

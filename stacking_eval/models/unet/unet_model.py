@@ -11,10 +11,11 @@ from .utils import F1, IoU, accuracy
 class StackedUNet(pl.LightningModule):
     def __init__(self,
                  lr=1e-4,
-                 nb_blocks=6,
+                 nb_blocks=4,
                  unet_mode='classic-backbone',
                  stacking_mode='hourglass',
-                 loss_mode='sum'):
+                 loss_mode='sum',
+                 use_scheduler=True):
         """
         lr: learning rate
         nb_blocks: # iterative unet blocks
@@ -84,6 +85,7 @@ class StackedUNet(pl.LightningModule):
         self.loss = F.binary_cross_entropy_with_logits
 
         # hyper parameters
+        self.use_scheduler = use_scheduler
         self.training = True
         self.unet_mode = unet_mode
         self.stacking_mode = stacking_mode
@@ -166,10 +168,15 @@ class StackedUNet(pl.LightningModule):
         return {'loss val': loss, 'IoU val': iou}
 
     def configure_optimizers(self):
-        return {
-            'optimizer': self.optimizer,
-            'lr_scheduler': self.lr_scheduler,
-        }
+        if self.use_scheduler:
+            return {
+                'optimizer': self.optimizer,
+                'lr_scheduler': self.lr_scheduler,
+            }
+        else:
+            return {
+                'optimizer': self.optimizer,
+            }
 
     def test_step(self, batch, batch_idx):
         x, y = batch
