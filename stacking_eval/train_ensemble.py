@@ -13,12 +13,12 @@ if __name__ == '__main__':
 
     pprint(vars(args))
 
-    dataset = ArealDataset(root_dir_images='/cluster/scratch/ljanik/training/images/',
-                           root_dir_gt='/cluster/scratch/ljanik/training/groundtruth/',
+    dataset = ArealDataset(root_dir_images='training/images/',
+                           root_dir_gt='training/groundtruth/',
                            target_size=(args.res, args.res))
 
     # train on full dataset to get kaggle score:
-    checkpoint_callback = ModelCheckpoint(dirpath=osp.join(r'/cluster/scratch/ljanik/ensemble_deepglobe', args.ckpt_dir))
+    checkpoint_callback = ModelCheckpoint(dirpath=osp.join('ensemble_deepglobe', args.ckpt_dir))
     train_dataloader = DataLoader(dataset,
                                   batch_size=args.batch_size,
                                   pin_memory=False,
