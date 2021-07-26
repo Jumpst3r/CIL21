@@ -48,6 +48,7 @@ The final submission can be repoduced with the following commands, run from the 
 https://polybox.ethz.ch/index.php/s/KsWqVBk2ppukgSa
 
 2. Train the 5 ensemble models
+
 In `train_ensemble.py`, adjust the paths on lines 16, 17 to where you extracted the extended dataset and the path on 21 to where the trained model should be saved. Then train with the following commands:
 ```
 bsub -W 24:00 -o resunet_hg_4_seed42 -n 2 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train_ensemble.py --ckpt_dir resunet_hg_4_seed42 --nb_blocks 4 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --max_epochs 50 --res 320 --batch_size 5 --seed 42
