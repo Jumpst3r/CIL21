@@ -57,9 +57,9 @@ bsub -W 24:00 -o resunet_hg_4_seed163 -n 2 -R "rusage[ngpus_excl_p=1,mem=8096]" 
 bsub -W 24:00 -o resunet_hg_4_seed1234 -n 2 -R "rusage[ngpus_excl_p=1,mem=8096]" -R "select[gpu_model0==GeForceRTX2080Ti]" python train_ensemble.py --ckpt_dir resunet_hg_4_seed1234 --nb_blocks 4 --unet_mode classic-backbone --stacking_mode hourglass --loss_mode sum --max_epochs 50 --res 320 --batch_size 5 --seed 1234
 ```
 Note: if you want to reproduce predictions without retraining, you can download the trained weights from here:
-Model trained on extended data & used for final submission (91.5%):
+- Model trained on extended data & used for final submission (91.5%): 
 https://polybox.ethz.ch/index.php/s/bnmoR3L2EjeKCbQ
-Model trained on CIL data only (91%):
+- Model trained on CIL data only (91%):
 https://polybox.ethz.ch/index.php/s/yBcXT3lnBwUeTwN
 
 4. Make predictions
