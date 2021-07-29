@@ -34,12 +34,17 @@ Of course, for the final submission (which includes test time augmentation and e
 
 ### Installation
 
+
+All commands provided in this file assume that you run the code on the cluster. Start by loading the required modules:
+
+ - `module load gcc/6.3.0 python_gpu/3.7.1 cuda/10.1.243 cudnn/7.6.4 eth_proxy`
+
 For convenience we included a `requirements.txt` file which can be used to install the same package we used as follows:
 
-- Create a python environment with the tool of your choice (`pip-env`, `virtualenv` etc)
+- Create a python environment: `python -m venv env`
 - Activate the created environment: `source env/bin/activate`
+- Update pip3: `pip install --upgrade pip`
 - Install the requirements: `pip3 install -r requirements.txt`
-
 
 ### Reproduce Submission
 The final submission can be repoduced with the following commands, run from the `stacking_eval` directory.
