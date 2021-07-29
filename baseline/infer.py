@@ -1,3 +1,4 @@
+
 import argparse
 import glob
 # =============
@@ -73,7 +74,7 @@ if __name__ == '__main__':
 
     optimizer = torch.optim.Adam
 
-    test_imgs = sorted(glob.glob('test_images/*.png'))
+    test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
 
     def getNorms():
         means = []
@@ -172,7 +173,7 @@ if __name__ == '__main__':
     def infer(key):
         model = getModel(key)
 
-        test_imgs = sorted(glob.glob('test_images/*.png'))
+        test_imgs = sorted(glob.glob('test_images/test_images/*.png'))
         cnt = 0
         # The input size on which your model was trained
         SIZE = 128

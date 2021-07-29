@@ -22,8 +22,8 @@ from sklearn.model_selection import KFold
 
 if __name__ == '__main__':
     USERNAME = getpass.getuser()
-    dataset = ArealDataset(root_dir_images='training/images/',
-                           root_dir_gt='training/groundtruth/',
+    dataset = ArealDataset(root_dir_images='training/training/images/',
+                           root_dir_gt='training/training/groundtruth/',
                            target_size=(128, 128))
     cross_val = 2
     kf = KFold(n_splits=cross_val, shuffle=True)
