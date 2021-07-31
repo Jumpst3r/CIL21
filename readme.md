@@ -15,9 +15,8 @@ The focus of our project is the investigation of if and how stacking & combining
 
 We call our architecture IterUNet. This code repository is structured as follows:
 
- - `submission`: Contains the code that was used to create the end submission. Also applies ensembling and test time augmentation (not applied on other experiments)
  - `baseline`: Contains the code needed to reproduce the FCN-ResNet and deeplab baseline results
- - `stacking_eval`: Contains the code needed to reproduce our model evaluation experiments
+ - `stacking_eval`: Contains the code needed to reproduce our model evaluation experiments as well as our final submission
 
  The files in each directory are somewhat similar / redundant but we grouped them into different directories for clarity.
 
